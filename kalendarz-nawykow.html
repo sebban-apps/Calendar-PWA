@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalendarz nawyków</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#1D7A8C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nawyki">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E7F1F3; --paper-raised:#F7FBFC; --ink:#17303A; --ink-soft:#5A7480;
+    --ink-faint:#93AAB2; --current:#1D7A8C; --current-dim:#9CCBD2; --sage:#4E9B72;
+    --rust:#B24B4B; --rule:#C7DEE2; --rule-soft:#DEECEF; --hidden-op:.42;
+  }
+  *{box-sizing:border-box}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Fraunces',Georgia,serif;min-height:100vh;display:flex;justify-content:center}
+  .page{width:100%;max-width:560px;padding:22px 16px 60px}
+
+  header.top{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;text-align:center}
+  .ripple-mark{flex-shrink:0}
+  .head-text{text-align:left}
+  .date-line{font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .title{font-size:21px;font-weight:500;margin-top:1px;font-variation-settings:'opsz' 40}
+
+  .card{background:var(--paper-raised);border:1px solid var(--rule);border-radius:4px;padding:20px 16px;margin-bottom:16px}
+
+  .toolbar{display:flex;gap:7px;margin-bottom:0;flex-wrap:wrap;align-items:center}
+  .toolbar input[type=text]{flex:1;min-width:130px;margin-bottom:0;padding:9px 11px;font-size:13.5px}
+  .icon-btn{background:none;border:1px solid var(--rule);border-radius:4px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:16px}
+  .icon-btn.active{border-color:var(--current);color:var(--current)}
+  .icon-btn svg{width:16px;height:16px}
+
+  textarea,input[type=text],input[type=date],input[type=time],select{width:100%;font-family:'Fraunces',Georgia,serif;font-size:14.5px;padding:10px;border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink);margin-bottom:10px}
+  input[type=date],input[type=time],select{font-family:'JetBrains Mono',monospace;font-size:13px}
+  textarea{min-height:66px;resize:vertical}
+  textarea:focus,input:focus,select:focus,.chip:focus,button:focus{outline:2px solid var(--current);outline-offset:2px}
+  .field-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:5px;display:block}
+  .err{color:var(--rust);font-family:'JetBrains Mono',monospace;font-size:11px;margin:-6px 0 10px;min-height:14px}
+
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chips.left{justify-content:flex-start}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:8px 12px;border-radius:999px;border:1px solid var(--rule);background:transparent;color:var(--ink);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .chip.active{background:var(--current);border-color:var(--current);color:var(--paper-raised)}
+  .chip.add-new{border-style:dashed;color:var(--ink-soft)}
+  .chip:disabled{opacity:.4;cursor:default}
+  .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+  .vis-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+  .vis-chip{font-family:'JetBrains Mono',monospace;font-size:11px;padding:7px 11px;border-radius:999px;border:1px solid var(--rule);background:var(--paper);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;opacity:1}
+  .vis-chip.off{opacity:var(--hidden-op)}
+  .vis-quick{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--current);background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px 2px}
+
+  .stats-line{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);text-align:center;margin:2px 0 14px}
+  .stats-line b{color:var(--current);font-weight:600}
+
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-nav .icon-btn{border:none}
+  .cal-month{font-size:16px;font-weight:500}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-dow{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-align:center;color:var(--ink-faint);padding-bottom:4px;text-transform:uppercase}
+  .cal-cell{min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid transparent;color:var(--ink);background:transparent}
+  .cal-cell.empty{visibility:hidden;cursor:default}
+  .cal-cell.has-entries{background:var(--paper);border-color:var(--rule)}
+  .cal-cell.selected{border-color:var(--current);background:var(--current);color:var(--paper-raised)}
+  .cal-cell.today-cell{font-weight:700;text-decoration:underline}
+  .cal-dots{display:flex;gap:2px;margin-top:4px;flex-wrap:wrap;justify-content:center;max-width:34px}
+  .cal-dot{width:5px;height:5px;border-radius:50%}
+  .cal-more{font-size:8px;color:var(--ink-faint);margin-top:1px}
+  .cal-cell.selected .cal-more{color:var(--paper-raised)}
+
+  .disclosure{margin-top:2px}
+  .panel{display:none;margin-top:10px;padding-top:12px;border-top:1px dashed var(--rule)}
+  .panel.visible{display:block}
+  .row-2{display:flex;gap:10px}
+  .row-2>div{flex:1}
+  .link-btn{background:none;border:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--current);text-decoration:underline;cursor:pointer;padding:4px}
+
+  .log-heading{font-size:13.5px;color:var(--ink-soft);margin:4px 0 8px;display:flex;align-items:center;gap:10px}
+  .log-heading::after{content:'';flex:1;height:1px;background:var(--rule)}
+
+  .entry{padding:12px 0;border-bottom:1px solid var(--rule-soft)}
+  .entry:last-child{border-bottom:none}
+  .entry-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .entry-meta{display:flex;align-items:baseline;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);margin-bottom:4px;flex-wrap:wrap}
+  .entry-tag{font-weight:600}
+  .entry-note{font-size:14px;line-height:1.5;white-space:pre-wrap}
+  .entry-actions{display:flex;gap:2px;flex-shrink:0}
+  .mini-btn{background:none;border:none;cursor:pointer;padding:4px;color:var(--ink-faint)}
+  .mini-btn svg{width:15px;height:15px;display:block}
+  .mini-btn.starred{color:var(--current)}
+  .entry.editing .entry-static,.entry.confirming .entry-static{display:none}
+  .empty-log{text-align:center;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);padding:18px 0;line-height:1.6}
+
+  .confirm-box{padding:8px 0}
+  .confirm-q{font-size:13.5px;margin-bottom:10px}
+  .confirm-actions{display:flex;gap:7px;flex-wrap:wrap}
+
+  button.primary,button.ghost,button.danger{font-family:'Fraunces',Georgia,serif;font-size:14.5px;padding:10px 18px;border-radius:4px;cursor:pointer;border:1px solid transparent}
+  button.primary{background:var(--ink);color:var(--paper-raised)}
+  button.ghost{background:transparent;border-color:var(--rule);color:var(--ink)}
+  button.danger{background:transparent;border-color:var(--rust);color:var(--rust)}
+  button:active{transform:scale(.98)}
+  button:disabled{opacity:.5;cursor:default}
+
+  .cat-manage-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--rule-soft)}
+  .cat-manage-row:last-child{border-bottom:none}
+  .cat-manage-name{flex:1;font-size:14px;display:flex;align-items:center;gap:8px}
+  .add-cat-form{display:flex;gap:7px;margin-top:10px}
+  .add-cat-form input{margin-bottom:0;flex:1}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="top">
+    <span class="ripple-mark">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <circle cx="17" cy="17" r="14.5" fill="none" stroke="var(--current-dim)" stroke-width="1.4"/>
+        <circle cx="17" cy="17" r="9.5" fill="none" stroke="var(--current)" stroke-width="1.8" opacity=".8"/>
+        <circle cx="17" cy="17" r="3" fill="var(--ink)"/>
+      </svg>
+    </span>
+    <span class="head-text">
+      <div class="date-line" id="todayLine">—</div>
+      <div class="title">Kalendarz nawyków</div>
+    </span>
+  </header>
+
+  <div class="card">
+    <div class="toolbar" style="margin-bottom:14px">
+      <input type="text" id="searchInput" data-testid="search" placeholder="szukaj w notatkach…">
+      <button class="icon-btn" id="favFilterBtn" data-testid="fav-filter" title="tylko ulubione">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
+      </button>
+    </div>
+
+    <div class="vis-row" id="visRow" data-testid="vis-row"></div>
+    <div style="margin-bottom:12px">
+      <button type="button" class="vis-quick" id="visAllBtn" data-testid="vis-all">wszystkie</button>
+      <span style="color:var(--rule)"> · </span>
+      <button type="button" class="vis-quick" id="visNoneBtn" data-testid="vis-none">żadna</button>
+    </div>
+
+    <div class="stats-line" id="statsLine" data-testid="stats-line"></div>
+
+    <div class="cal-nav">
+      <button class="icon-btn" id="calPrev" data-testid="cal-prev">‹</button>
+      <div class="cal-month" id="calMonthLabel" data-testid="cal-month">—</div>
+      <button class="icon-btn" id="calNext" data-testid="cal-next">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid" data-testid="cal-grid"></div>
+  </div>
+
+  <div class="card" id="resultsCard" data-testid="results-card" style="display:none">
+    <div id="resultsPanel" data-testid="results-panel"></div>
+  </div>
+
+  <div class="card" id="dayCard" data-testid="day-card">
+    <div id="dayPanel" data-testid="day-panel"></div>
+  </div>
+
+  <div class="card">
+    <div class="disclosure">
+      <button class="link-btn" id="toggleCatMgrBtn" data-testid="toggle-cat-mgr">+ zarządzaj kategoriami</button>
+      <div class="panel" id="catMgrPanel" data-testid="cat-mgr-panel"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="disclosure">
+      <button class="link-btn" id="exportBtn" data-testid="export-btn">eksportuj kopię zapasową</button>
+      <span style="color:var(--rule)"> · </span>
+      <button class="link-btn" id="importBtn" data-testid="import-btn">przywróć z kopii</button>
+      <input type="file" id="importFile" data-testid="import-file" accept="application/json,.json" style="display:none">
+      <div class="err" id="backupMsg" data-testid="backup-msg"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------------- storage (Claude gdy dostępne, w przeciwnym razie localStorage telefonu) ---------------- */
+const Store = (function () {
+  const real = (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function') ? window.storage : null;
+  const LS_PREFIX = 'kalendarz-nawykow:';
+  let lsWorks = false;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(LS_PREFIX + '__test', '1');
+      localStorage.removeItem(LS_PREFIX + '__test');
+      lsWorks = true;
+    }
+  } catch (e) { lsWorks = false; }
+  const mem = new Map();
+
+  return {
+    mode: real ? 'claude' : (lsWorks ? 'local' : 'memory'),
+    async get(key) {
+      if (real) { try { const r = await real.get(key, false); return (r && r.value) ? r.value : null; } catch (e) { return null; } }
+      if (lsWorks) { try { return localStorage.getItem(LS_PREFIX + key); } catch (e) { return mem.has(key) ? mem.get(key) : null; } }
+      return mem.has(key) ? mem.get(key) : null;
+    },
+    async set(key, val) {
+      if (real) { try { await real.set(key, val, false); return true; } catch (e) { return false; } }
+      if (lsWorks) { try { localStorage.setItem(LS_PREFIX + key, val); return true; } catch (e) { mem.set(key, val); return false; } }
+      mem.set(key, val); return true;
+    }
+  };
+})();
+async function loadJSON(key, fb) {
+  const raw = await Store.get(key);
+  if (raw === null || raw === undefined) return fb;
+  try { const v = JSON.parse(raw); return (v === null || v === undefined) ? fb : v; } catch (e) { return fb; }
+}
+const saveJSON = (key, val) => Store.set(key, JSON.stringify(val));
+
+const DEFAULT_CATEGORIES = ['plastry', 'witaminy', 'kosmetyki', 'sport'];
+const DEFAULT_CAT_COLORS = { 'plastry': '#1D7A8C', 'witaminy': '#D69A44', 'kosmetyki': '#B97BA6', 'sport': '#4E9B72' };
+const FALLBACK_PALETTE = ['#3E7CB1', '#6B6FC4', '#4FA8A0', '#8B7EC8', '#5FA3C0', '#9A82B5', '#5C8F6B', '#C4708A'];
+const RECURRING_HORIZON_WEEKS = 12;
+
+function colorForCategory(name) {
+  if (DEFAULT_CAT_COLORS[name]) return DEFAULT_CAT_COLORS[name];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return FALLBACK_PALETTE[h % FALLBACK_PALETTE.length];
+}
+
+/* strażnicy typów: chronią przed uszkodzonymi danymi w magazynie */
+const asArray = v => Array.isArray(v) ? v : [];
+const asPlainObject = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const loadEntries = async () => asArray(await loadJSON('entries', []))
+  .filter(e => e && typeof e === 'object' && e.id !== undefined && typeof e.date === 'string' && DATE_RE.test(e.date) && typeof e.category === 'string');
+const saveEntries = e => saveJSON('entries', asArray(e));
+
+const loadCategories = async () => {
+  const raw = asArray(await loadJSON('categories', DEFAULT_CATEGORIES))
+    .filter(c => typeof c === 'string' && c.trim() !== '');
+  return raw.length ? raw : DEFAULT_CATEGORIES.slice();
+};
+const saveCategories = c => saveJSON('categories', asArray(c));
+
+const loadHidden = async () => asArray(await loadJSON('hiddenCategories', []))
+  .filter(c => typeof c === 'string');
+const saveHidden = h => saveJSON('hiddenCategories', asArray(h));
+
+const loadSeriesMeta = async () => asPlainObject(await loadJSON('seriesMeta', {}));
+const saveSeriesMeta = m => saveJSON('seriesMeta', asPlainObject(m));
+
+/* ---------------- narzędzia ---------------- */
+const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+const MONTHS_NOM = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
+const MONTHS_ABBR = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+const DOW = ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'];
+const DAYS_FULL = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+/* poniedziałek..niedziela w kolejności siatki, z wartością getDay() */
+const WEEKDAY_OPTIONS = [1, 2, 3, 4, 5, 6, 0];
+
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const esc = s => { const d = document.createElement('div'); d.textContent = (s === null || s === undefined) ? '' : String(s); return d.innerHTML; };
+const $ = id => document.getElementById(id);
+const dateFromYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12, 0, 0); };
+
+/* walidacje */
+function parseClock(raw) {
+  const s = String(raw === null || raw === undefined ? '' : raw).trim();
+  if (s === '') return { ok: true, value: '' };
+  const m = s.match(/^(\d{1,2})[:.](\d{2})$/);
+  if (!m) return { ok: false, msg: 'Zły format godziny, wpisz np. 9:00.' };
+  const h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
+  if (h > 23) return { ok: false, msg: 'Godzina od 0 do 23.' };
+  if (mi > 59) return { ok: false, msg: 'Minuty od 0 do 59.' };
+  return { ok: true, value: `${h}:${pad(mi)}` };
+}
+function showErr(el, msg) { if (el) el.textContent = msg || ''; }
+
+function makeEntry({ date, time, category, note, favorite, seriesId }) {
+  return {
+    id: Date.now() + Math.floor(Math.random() * 100000),
+    date, time: time || '', category, note: (note || '').trim(),
+    favorite: !!favorite, seriesId: (seriesId === undefined ? null : seriesId)
+  };
+}
+
+/* ---------------- powtarzalne serie ---------------- */
+function nextOrSameWeekday(dateObj, weekday) {
+  const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate(), 12, 0, 0);
+  const diff = (weekday - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+function computeHorizon(fromDate) {
+  const d = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), 12, 0, 0);
+  d.setDate(d.getDate() + RECURRING_HORIZON_WEEKS * 7);
+  return d;
+}
+function occurrencesBetween(anchorDate, horizonDate) {
+  const out = [];
+  let d = new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate(), 12, 0, 0);
+  while (d.getTime() <= horizonDate.getTime()) { out.push(new Date(d)); d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7, 12, 0, 0); }
+  return out;
+}
+
+async function addEntry({ date, time, category, note, recurringWeekday }) {
+  const entries = await loadEntries();
+  if (recurringWeekday === null || recurringWeekday === undefined) {
+    entries.push(makeEntry({ date, time, category, note, favorite: false, seriesId: null }));
+    await saveEntries(entries);
+    return;
+  }
+  const seriesId = Date.now() + Math.floor(Math.random() * 100000);
+  const anchor = nextOrSameWeekday(dateFromYmd(date), recurringWeekday);
+  const horizon = computeHorizon(new Date());
+  const occ = occurrencesBetween(anchor, horizon);
+  occ.forEach(d => entries.push(makeEntry({ date: ymd(d), time, category, note, favorite: false, seriesId })));
+  await saveEntries(entries);
+  const metas = await loadSeriesMeta();
+  metas[String(seriesId)] = { category, weekday: recurringWeekday, time: time || '', generatedUntil: ymd(horizon), endedAt: null };
+  await saveSeriesMeta(metas);
+}
+
+async function regenerateSeries() {
+  const metas = await loadSeriesMeta();
+  const ids = Object.keys(metas).filter(id => metas[id] && !metas[id].endedAt);
+  if (!ids.length) return;
+  const today = new Date();
+  const horizon = computeHorizon(today);
+  let changed = false;
+  const entries = await loadEntries();
+  for (const id of ids) {
+    const meta = metas[id];
+    if (!meta.generatedUntil || !DATE_RE.test(meta.generatedUntil)) continue;
+    const genUntil = dateFromYmd(meta.generatedUntil);
+    if (horizon.getTime() <= genUntil.getTime()) continue;
+    const startFrom = new Date(genUntil.getFullYear(), genUntil.getMonth(), genUntil.getDate() + 1, 12, 0, 0);
+    const nextDate = nextOrSameWeekday(startFrom, meta.weekday);
+    const occ = occurrencesBetween(nextDate, horizon);
+    occ.forEach(d => entries.push(makeEntry({ date: ymd(d), time: meta.time, category: meta.category, note: '', favorite: false, seriesId: Number(id) })));
+    meta.generatedUntil = ymd(horizon);
+    changed = true;
+  }
+  if (changed) { await saveEntries(entries); await saveSeriesMeta(metas); }
+}
+
+/* ---------------- zakładki kategorii: dodawanie / usuwanie ---------------- */
+async function renderCatChips(container, selectedRef, allowAdd) {
+  const cats = await loadCategories();
+  if (!cats.includes(selectedRef.value)) selectedRef.value = cats[0] || 'Inne';
+  container.innerHTML =
+    cats.map(c => `<button type="button" class="chip${c === selectedRef.value ? ' active' : ''}" data-cat="${esc(c)}"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</button>`).join('') +
+    (allowAdd ? `<button type="button" class="chip add-new" data-addcat="1">+ nowa</button>` : '');
+}
+function wireCatChips(container, selectedRef, allowAdd, onChange) {
+  container.addEventListener('click', async e => {
+    const add = e.target.closest('[data-addcat]');
+    if (add) {
+      const name = (prompt('Nazwa nowej kategorii:') || '').trim();
+      if (!name) return;
+      const cats = await loadCategories();
+      if (!cats.includes(name)) { cats.push(name); await saveCategories(cats); }
+      selectedRef.value = name;
+      await renderCatChips(container, selectedRef, allowAdd);
+      if (onChange) onChange();
+      return;
+    }
+    const chip = e.target.closest('[data-cat]');
+    if (!chip) return;
+    selectedRef.value = chip.dataset.cat;
+    container.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    if (onChange) onChange();
+  });
+}
+
+/* ---------------- zakładki: data dzisiejsza ---------------- */
+(function () {
+  const d = new Date();
+  $('todayLine').textContent = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]} ${d.getFullYear()}`;
+})();
+
+/* ================= WIDOCZNOŚĆ KATEGORII ================= */
+let hiddenCats = [];
+const visRow = $('visRow');
+
+async function renderVisRow() {
+  const cats = await loadCategories();
+  hiddenCats = hiddenCats.filter(c => cats.includes(c));
+  visRow.innerHTML = cats.map(c => {
+    const off = hiddenCats.includes(c);
+    return `<button type="button" class="vis-chip${off ? ' off' : ''}" data-vcat="${esc(c)}"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</button>`;
+  }).join('');
+}
+visRow.addEventListener('click', async e => {
+  const chip = e.target.closest('[data-vcat]');
+  if (!chip) return;
+  const c = chip.dataset.vcat;
+  if (hiddenCats.includes(c)) hiddenCats = hiddenCats.filter(x => x !== c);
+  else hiddenCats.push(c);
+  await saveHidden(hiddenCats);
+  await renderAll();
+});
+$('visAllBtn').addEventListener('click', async () => { hiddenCats = []; await saveHidden(hiddenCats); await renderAll(); });
+$('visNoneBtn').addEventListener('click', async () => { const cats = await loadCategories(); hiddenCats = cats.slice(); await saveHidden(hiddenCats); await renderAll(); });
+
+const isVisible = c => !hiddenCats.includes(c);
+
+/* ================= FILTRY / SZUKANIE ================= */
+const F = { search: '', favOnly: false };
+$('searchInput').addEventListener('input', () => { F.search = $('searchInput').value.trim().toLowerCase(); renderResultsOrDay(); });
+$('favFilterBtn').addEventListener('click', () => {
+  F.favOnly = !F.favOnly;
+  $('favFilterBtn').classList.toggle('active', F.favOnly);
+  renderResultsOrDay();
+});
+
+function dayLabelOf(dateStr) {
+  const d = dateFromYmd(dateStr), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  if (same(d, t)) return 'dziś';
+  if (same(d, y)) return 'wczoraj';
+  return `${d.getDate()} ${MONTHS_ABBR[d.getMonth()]}`;
+}
+
+function entryStaticHtml(s, showDate) {
+  return `<div class="entry-static">
+    <div class="entry-top">
+      <div style="flex:1">
+        <div class="entry-meta">
+          ${showDate ? `<span>${dayLabelOf(s.date)}</span>` : ''}
+          ${s.time ? `<span>${esc(s.time)}</span>` : ''}
+          <span class="entry-tag" style="color:${colorForCategory(s.category)}">${esc(s.category)}</span>
+          ${s.seriesId ? `<span title="wpis z serii powtarzalnej">↻</span>` : ''}
+        </div>
+        ${s.note ? `<div class="entry-note">${esc(s.note)}</div>` : ''}
+      </div>
+      <div class="entry-actions">
+        <button class="mini-btn ${s.favorite ? 'starred' : ''}" data-act="fav" data-id="${s.id}" title="ulubione">
+          <svg viewBox="0 0 24 24" fill="${s.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
+        </button>
+        <button class="mini-btn" data-act="edit" data-id="${s.id}" title="edytuj">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+        <button class="mini-btn" data-act="del" data-id="${s.id}" title="usuń">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
+    </div></div>`;
+}
+function entryEditHtml(s, cats) {
+  return `<div class="entry-edit">
+    <span class="field-label">Kategoria</span>
+    <div class="chips left edit-tags">${cats.map(c => `<button type="button" class="chip${c === s.category ? ' active' : ''}" data-ecat="${esc(c)}"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</button>`).join('')}</div>
+    <span class="field-label">Godzina (opcjonalnie)</span>
+    <input type="text" class="edit-time" value="${esc(s.time)}" placeholder="np. 9:00">
+    <span class="field-label">Notatka</span>
+    <textarea class="edit-note">${esc(s.note)}</textarea>
+    <div class="err edit-err"></div>
+    <div class="controls" style="display:flex;gap:9px">
+      <button class="primary" data-act="save-edit" data-id="${s.id}">Zapisz</button>
+      <button class="ghost" data-act="cancel-edit" data-id="${s.id}">Anuluj</button>
+    </div></div>`;
+}
+function entryConfirmHtml(s) {
+  if (!s.seriesId) {
+    return `<div class="confirm-box">
+      <div class="confirm-q">Usunąć ten wpis?</div>
+      <div class="confirm-actions">
+        <button class="danger" data-act="confirm-del-one" data-id="${s.id}">Usuń</button>
+        <button class="ghost" data-act="cancel-del" data-id="${s.id}">Anuluj</button>
+      </div></div>`;
+  }
+  return `<div class="confirm-box">
+    <div class="confirm-q">Ten wpis jest częścią serii powtarzalnej. Co usunąć?</div>
+    <div class="confirm-actions">
+      <button class="danger" data-act="confirm-del-one" data-id="${s.id}">Tylko ten dzień</button>
+      <button class="danger" data-act="confirm-del-series" data-id="${s.id}">Całą serię od tej daty</button>
+      <button class="ghost" data-act="cancel-del" data-id="${s.id}">Anuluj</button>
+    </div></div>`;
+}
+
+let editingId = null;
+let deletingId = null;
+
+async function handleEntryListClick(e, list, afterChange) {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) {
+    const chip = e.target.closest('[data-ecat]');
+    if (chip) {
+      const row = chip.closest('.edit-tags');
+      row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+    }
+    return;
+  }
+  const id = Number(btn.dataset.id);
+  const act = btn.dataset.act;
+
+  if (act === 'fav') {
+    const entries = await loadEntries();
+    const s = entries.find(x => x.id === id);
+    if (s) { s.favorite = !s.favorite; await saveEntries(entries); }
+    afterChange(); return;
+  }
+  if (act === 'edit') { editingId = id; deletingId = null; afterChange(); return; }
+  if (act === 'cancel-edit') { editingId = null; afterChange(); return; }
+  if (act === 'del') { deletingId = id; editingId = null; afterChange(); return; }
+  if (act === 'cancel-del') { deletingId = null; afterChange(); return; }
+  if (act === 'confirm-del-one') {
+    const entries = (await loadEntries()).filter(x => x.id !== id);
+    await saveEntries(entries);
+    deletingId = null; afterChange(); await renderCalendar(); return;
+  }
+  if (act === 'confirm-del-series') {
+    const entries = await loadEntries();
+    const target = entries.find(x => x.id === id);
+    if (target && target.seriesId) {
+      const keep = entries.filter(x => !(x.seriesId === target.seriesId && x.date >= target.date));
+      await saveEntries(keep);
+      const metas = await loadSeriesMeta();
+      const meta = metas[String(target.seriesId)];
+      if (meta) { meta.endedAt = target.date; await saveSeriesMeta(metas); }
+    }
+    deletingId = null; afterChange(); await renderCalendar(); return;
+  }
+  if (act === 'save-edit') {
+    const wrap = e.currentTarget.querySelector(`.entry[data-id="${id}"]`) || document.querySelector(`.entry[data-id="${id}"]`);
+    const errEl = wrap.querySelector('.edit-err');
+    const tr = parseClock(wrap.querySelector('.edit-time').value);
+    if (!tr.ok) { showErr(errEl, tr.msg); return; }
+    const catBtn = wrap.querySelector('.edit-tags .chip.active');
+    const entries = await loadEntries();
+    const s = entries.find(x => x.id === id);
+    if (s) {
+      s.time = tr.value;
+      s.category = catBtn ? catBtn.dataset.ecat : s.category;
+      s.note = wrap.querySelector('.edit-note').value.trim();
+      await saveEntries(entries);
+    }
+    editingId = null; afterChange(); await renderCalendar(); return;
+  }
+}
+
+/* ================= PANEL DNIA / WYNIKI WYSZUKIWANIA ================= */
+const CAL = { year: new Date().getFullYear(), month: new Date().getMonth(), selected: ymd(new Date()) };
+const dayPanel = $('dayPanel'), dayCard = $('dayCard'), resultsPanel = $('resultsPanel'), resultsCard = $('resultsCard');
+const addRef = { value: 'plastry' };
+
+function searchActive() { return F.search !== '' || F.favOnly; }
+
+async function renderResultsOrDay() {
+  if (searchActive()) {
+    resultsCard.style.display = ''; dayCard.style.display = 'none';
+    await renderResults();
+  } else {
+    resultsCard.style.display = 'none'; dayCard.style.display = '';
+    await renderDayPanel();
+  }
+}
+
+async function renderResults() {
+  const all = (await loadEntries()).filter(s => isVisible(s.category));
+  const filtered = all.filter(s => {
+    if (F.favOnly && !s.favorite) return false;
+    if (F.search) {
+      const hay = ((s.note || '') + ' ' + s.category).toLowerCase();
+      if (!hay.includes(F.search)) return false;
+    }
+    return true;
+  }).sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+  let html = `<div class="log-heading">wyniki${filtered.length ? ` · ${filtered.length}` : ''}</div>`;
+  html += filtered.length
+    ? filtered.map(s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, true)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`).join('')
+    : `<div class="empty-log">Nic nie pasuje do szukania.</div>`;
+  resultsPanel.innerHTML = html;
+}
+
+let catsCache = DEFAULT_CATEGORIES.slice();
+
+resultsPanel.addEventListener('click', e => handleEntryListClick(e, null, renderResultsOrDay));
+
+async function renderDayPanel() {
+  catsCache = await loadCategories();
+  const key = CAL.selected;
+  const entries = (await loadEntries()).filter(s => s.date === key && isVisible(s.category)).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+  const [y, m, d] = key.split('-').map(Number);
+  const label = `${d} ${MONTHS_GEN[m - 1]} ${y}${key === ymd(new Date()) ? ' · dziś' : ''}`;
+
+  let html = `<div class="log-heading">${esc(label)}</div>`;
+  html += entries.length
+    ? entries.map(s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, false)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`).join('')
+    : `<div class="empty-log">Brak wpisów tego dnia.</div>`;
+
+  html += `<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--rule)">
+    <span class="field-label">Dodaj wpis</span>
+    <div class="chips left" id="addTagRow" data-testid="add-tag-row"></div>
+    <span class="field-label" style="margin-top:10px">Godzina (opcjonalnie)</span>
+    <input type="text" id="addTime" data-testid="add-time" placeholder="np. 8:00">
+    <span class="field-label">Notatka (opcjonalnie)</span>
+    <textarea id="addNote" data-testid="add-note" placeholder="np. plaster na lewym ramieniu"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;cursor:pointer">
+      <input type="checkbox" id="addRecurring" data-testid="add-recurring" style="width:auto;margin:0">
+      powtarzaj co tydzień
+    </label>
+    <div id="recurringFields" style="display:none">
+      <span class="field-label">Dzień tygodnia</span>
+      <select id="recurWeekday" data-testid="recur-weekday"></select>
+    </div>
+    <div class="err" id="addErr" data-testid="add-err"></div>
+    <div class="controls" style="display:flex;gap:9px"><button class="primary" id="addSaveBtn" data-testid="add-save">Dodaj wpis</button></div>
+  </div>`;
+
+  dayPanel.innerHTML = html;
+
+  const weekdaySel = $('recurWeekday');
+  const curDow = dateFromYmd(key).getDay();
+  weekdaySel.innerHTML = WEEKDAY_OPTIONS.map((wd, i) => `<option value="${wd}" ${wd === curDow ? 'selected' : ''}>${DOW[i]} · ${DAYS_FULL[wd]}</option>`).join('');
+
+  $('addRecurring').addEventListener('change', () => { $('recurringFields').style.display = $('addRecurring').checked ? 'block' : 'none'; });
+
+  await renderCatChips($('addTagRow'), addRef, true);
+  wireCatChips($('addTagRow'), addRef, true);
+
+  $('addSaveBtn').addEventListener('click', async () => {
+    const tr = parseClock($('addTime').value);
+    if (!tr.ok) { showErr($('addErr'), tr.msg); return; }
+    showErr($('addErr'), '');
+    const recurring = $('addRecurring').checked;
+    const weekday = recurring ? Number(weekdaySel.value) : null;
+    await addEntry({ date: key, time: tr.value, category: addRef.value, note: $('addNote').value, recurringWeekday: weekday });
+    await renderAll();
+  });
+}
+
+dayPanel.addEventListener('click', e => handleEntryListClick(e, null, renderResultsOrDay));
+
+/* ================= KALENDARZ ================= */
+const calGrid = $('calGrid');
+$('calPrev').addEventListener('click', () => { CAL.month--; if (CAL.month < 0) { CAL.month = 11; CAL.year--; } renderCalendar(); });
+$('calNext').addEventListener('click', () => { CAL.month++; if (CAL.month > 11) { CAL.month = 0; CAL.year++; } renderCalendar(); });
+
+async function renderStats(entries) {
+  const [y, m] = [CAL.year, CAL.month];
+  const inMonth = entries.filter(s => { const d = dateFromYmd(s.date); return d.getFullYear() === y && d.getMonth() === m && isVisible(s.category); });
+  $('statsLine').innerHTML = inMonth.length ? `w tym miesiącu: <b>${inMonth.length}</b> ${inMonth.length === 1 ? 'wpis' : 'wpisów'}` : '';
+}
+
+async function renderCalendar() {
+  const entries = await loadEntries();
+  $('calMonthLabel').textContent = `${MONTHS_NOM[CAL.month]} ${CAL.year}`;
+
+  const byDate = {};
+  entries.forEach(s => {
+    if (!isVisible(s.category)) return;
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s.category);
+  });
+
+  const first = new Date(CAL.year, CAL.month, 1);
+  const offset = (first.getDay() + 6) % 7;
+  const days = new Date(CAL.year, CAL.month + 1, 0).getDate();
+  const todayKey = ymd(new Date());
+
+  let html = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < offset; i++) html += `<div class="cal-cell empty"></div>`;
+  for (let d = 1; d <= days; d++) {
+    const key = `${CAL.year}-${pad(CAL.month + 1)}-${pad(d)}`;
+    const cats = byDate[key];
+    const cls = ['cal-cell'];
+    if (cats) cls.push('has-entries');
+    if (key === todayKey) cls.push('today-cell');
+    if (key === CAL.selected) cls.push('selected');
+    let marks = '';
+    if (cats) {
+      const uniq = [...new Set(cats)];
+      const shown = uniq.slice(0, 4);
+      marks = `<div class="cal-dots">${shown.map(c => `<div class="cal-dot" style="background:${colorForCategory(c)}"></div>`).join('')}</div>`;
+      if (uniq.length > 4) marks += `<div class="cal-more">+${uniq.length - 4}</div>`;
+    }
+    html += `<div class="${cls.join(' ')}" data-date="${key}"><div>${d}</div>${marks}</div>`;
+  }
+  calGrid.innerHTML = html;
+  await renderStats(entries);
+}
+calGrid.addEventListener('click', e => {
+  const cell = e.target.closest('[data-date]');
+  if (!cell) return;
+  CAL.selected = cell.dataset.date;
+  editingId = null; deletingId = null;
+  renderCalendar();
+  if (!searchActive()) renderDayPanel();
+});
+
+/* ================= ZARZĄDZANIE KATEGORIAMI ================= */
+const catMgrPanel = $('catMgrPanel');
+let catPendingDelete = null;
+let catDeleteAction = 'delete';
+let catSubstitute = null;
+
+$('toggleCatMgrBtn').addEventListener('click', async () => {
+  const panel = $('catMgrPanel');
+  if (panel.classList.contains('visible')) { panel.classList.remove('visible'); }
+  else { panel.classList.add('visible'); catPendingDelete = null; await renderCatMgr(); }
+});
+
+async function countEntriesFor(cat) {
+  const entries = await loadEntries();
+  return entries.filter(s => s.category === cat).length;
+}
+
+async function renderCatMgr() {
+  const cats = await loadCategories();
+  let html = '';
+  for (const c of cats) {
+    if (catPendingDelete === c) {
+      const n = await countEntriesFor(c);
+      const others = cats.filter(x => x !== c);
+      if (!catSubstitute || !others.includes(catSubstitute)) catSubstitute = others[0] || null;
+      html += `<div class="cat-manage-row" style="flex-direction:column;align-items:stretch">
+        <div class="confirm-q">${n > 0 ? `Kategoria „${esc(c)}” ma ${n} ${n === 1 ? 'wpis' : 'wpisów'}. Co zrobić z nimi?` : `Usunąć pustą kategorię „${esc(c)}”?`}</div>
+        ${n > 0 ? `
+        <label style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11.5px;margin-bottom:6px">
+          <input type="radio" name="catDelAction" value="delete" ${catDeleteAction === 'delete' ? 'checked' : ''} style="width:auto"> usuń też te wpisy
+        </label>
+        <label style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11.5px;margin-bottom:8px">
+          <input type="radio" name="catDelAction" value="reassign" ${catDeleteAction === 'reassign' ? 'checked' : ''} style="width:auto" ${!others.length ? 'disabled' : ''}> przenieś do:
+          <select id="catSubSelect" style="width:auto;margin:0" ${!others.length ? 'disabled' : ''}>${others.map(o => `<option value="${esc(o)}" ${o === catSubstitute ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>
+        </label>` : ''}
+        <div class="confirm-actions">
+          <button class="danger" data-mact="confirm-del-cat" data-cat="${esc(c)}">Usuń kategorię</button>
+          <button class="ghost" data-mact="cancel-del-cat">Anuluj</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="cat-manage-row">
+        <div class="cat-manage-name"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</div>
+        <button class="mini-btn" data-mact="del-cat" data-cat="${esc(c)}" title="usuń kategorię">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>`;
+    }
+  }
+  html += `<div class="add-cat-form">
+    <input type="text" id="newCatInput" data-testid="new-cat-input" placeholder="nowa kategoria">
+    <button class="ghost" id="newCatBtn" data-testid="new-cat-btn">Dodaj</button>
+  </div>
+  <div class="err" id="catMgrErr" data-testid="cat-mgr-err"></div>`;
+  catMgrPanel.innerHTML = html;
+}
+
+catMgrPanel.addEventListener('change', e => {
+  if (e.target.name === 'catDelAction') { catDeleteAction = e.target.value; renderCatMgr(); }
+  if (e.target.id === 'catSubSelect') { catSubstitute = e.target.value; }
+});
+
+catMgrPanel.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-mact]');
+  if (btn) {
+    const act = btn.dataset.mact;
+    if (act === 'del-cat') { catPendingDelete = btn.dataset.cat; catDeleteAction = 'delete'; catSubstitute = null; await renderCatMgr(); return; }
+    if (act === 'cancel-del-cat') { catPendingDelete = null; await renderCatMgr(); return; }
+    if (act === 'confirm-del-cat') {
+      const name = btn.dataset.cat;
+      const n = await countEntriesFor(name);
+      await deleteCategory(name, n > 0 ? catDeleteAction : 'delete', catSubstitute);
+      catPendingDelete = null;
+      await renderCatMgr();
+      await renderAll();
+      return;
+    }
+    return;
+  }
+  if (e.target.id === 'newCatBtn' || e.target.closest('#newCatBtn')) {
+    const input = $('newCatInput');
+    const name = (input.value || '').trim();
+    if (!name) { showErr($('catMgrErr'), 'Podaj nazwę kategorii.'); return; }
+    const cats = await loadCategories();
+    if (cats.includes(name)) { showErr($('catMgrErr'), 'Taka kategoria już istnieje.'); return; }
+    showErr($('catMgrErr'), '');
+    cats.push(name);
+    await saveCategories(cats);
+    await renderCatMgr();
+    await renderAll();
+  }
+});
+
+async function deleteCategory(name, action, substitute) {
+  const cats = (await loadCategories()).filter(c => c !== name);
+  await saveCategories(cats.length ? cats : DEFAULT_CATEGORIES.slice());
+
+  const entries = await loadEntries();
+  const metas = await loadSeriesMeta();
+  let newEntries;
+  const today = ymd(new Date());
+
+  if (action === 'reassign' && substitute) {
+    newEntries = entries.map(e => e.category === name ? { ...e, category: substitute } : e);
+    Object.keys(metas).forEach(id => { if (metas[id] && metas[id].category === name) metas[id].category = substitute; });
+  } else {
+    newEntries = entries.filter(e => e.category !== name);
+    Object.keys(metas).forEach(id => { if (metas[id] && metas[id].category === name && !metas[id].endedAt) metas[id].endedAt = today; });
+  }
+  await saveEntries(newEntries);
+  await saveSeriesMeta(metas);
+  hiddenCats = hiddenCats.filter(c => c !== name);
+  await saveHidden(hiddenCats);
+}
+
+/* ---------------- kopia zapasowa: eksport / import ---------------- */
+const BACKUP_VERSION = 1;
+const backupMsg = $('backupMsg');
+
+async function gatherBackup() {
+  const [entries, categories, seriesMeta, hidden] = await Promise.all([
+    loadEntries(), loadCategories(), loadSeriesMeta(), loadHidden()
+  ]);
+  return { app: 'kalendarz-nawykow', version: BACKUP_VERSION, exportedAt: new Date().toISOString(), entries, categories, seriesMeta, hiddenCategories: hidden };
+}
+
+function sanitizeBackupPayload(data) {
+  if (!data || typeof data !== 'object') throw new Error('To nie jest plik kopii zapasowej.');
+  const entries = asArray(data.entries)
+    .filter(e => e && typeof e === 'object' && typeof e.date === 'string' && DATE_RE.test(e.date) && typeof e.category === 'string' && e.category.trim() !== '')
+    .map((e, i) => ({
+      id: (typeof e.id === 'number' && Number.isFinite(e.id)) ? e.id : (Date.now() + i * 13 + Math.floor(Math.random() * 1000)),
+      date: e.date,
+      time: (typeof e.time === 'string' && parseClock(e.time).ok) ? parseClock(e.time).value : '',
+      category: String(e.category).trim(),
+      note: typeof e.note === 'string' ? e.note : '',
+      favorite: !!e.favorite,
+      seriesId: (typeof e.seriesId === 'number') ? e.seriesId : null
+    }));
+  const categories = asArray(data.categories).filter(c => typeof c === 'string' && c.trim() !== '');
+  const metaRaw = asPlainObject(data.seriesMeta);
+  const seriesMeta = {};
+  Object.keys(metaRaw).forEach(id => {
+    const m = metaRaw[id];
+    if (!m || typeof m !== 'object') return;
+    if (typeof m.category !== 'string' || m.category.trim() === '') return;
+    if (typeof m.weekday !== 'number' || m.weekday < 0 || m.weekday > 6) return;
+    if (typeof m.generatedUntil !== 'string' || !DATE_RE.test(m.generatedUntil)) return;
+    seriesMeta[id] = {
+      category: m.category, weekday: m.weekday,
+      time: (typeof m.time === 'string' && parseClock(m.time).ok) ? parseClock(m.time).value : '',
+      generatedUntil: m.generatedUntil,
+      endedAt: (typeof m.endedAt === 'string' && DATE_RE.test(m.endedAt)) ? m.endedAt : null
+    };
+  });
+  const hiddenCategories = asArray(data.hiddenCategories).filter(c => typeof c === 'string');
+  return {
+    entries,
+    categories: categories.length ? categories : DEFAULT_CATEGORIES.slice(),
+    seriesMeta,
+    hiddenCategories
+  };
+}
+
+$('exportBtn').addEventListener('click', async () => {
+  showErr(backupMsg, '');
+  const data = await gatherBackup();
+  const json = JSON.stringify(data, null, 2);
+  const filename = `nawyki-kopia-${ymd(new Date())}.json`;
+
+  try {
+    if (typeof Blob !== 'undefined') {
+      const blob = new Blob([json], { type: 'application/json' });
+      if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && typeof File !== 'undefined') {
+        const file = new File([blob], filename, { type: 'application/json' });
+        if (navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'Kopia zapasowa: Kalendarz nawyków' }); backupMsg.textContent = 'Wysłano do udostępnienia.'; backupMsg.style.color = 'var(--sage)'; return; }
+          catch (shareErr) { /* anulowane albo niedostępne, spróbuj pobrania */ }
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      backupMsg.style.color = 'var(--sage)';
+      backupMsg.textContent = `Pobrano: ${filename}`;
+    }
+  } catch (e) {
+    backupMsg.style.color = 'var(--rust)';
+    backupMsg.textContent = 'Nie udało się wyeksportować pliku.';
+  }
+});
+
+$('importBtn').addEventListener('click', () => {
+  showErr(backupMsg, '');
+  $('importFile').click();
+});
+
+$('importFile').addEventListener('change', async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  if (!confirm('To zastąpi obecne dane danymi z pliku. Kontynuować?')) return;
+  try {
+    const text = await file.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (e2) { throw new Error('Plik nie jest poprawnym JSON.'); }
+    const clean = sanitizeBackupPayload(parsed);
+    await saveEntries(clean.entries);
+    await saveCategories(clean.categories);
+    await saveSeriesMeta(clean.seriesMeta);
+    await saveHidden(clean.hiddenCategories);
+    hiddenCats = clean.hiddenCategories.slice();
+    backupMsg.style.color = 'var(--sage)';
+    backupMsg.textContent = `Przywrócono ${clean.entries.length} ${clean.entries.length === 1 ? 'wpis' : 'wpisów'}.`;
+    await renderAll();
+  } catch (err) {
+    backupMsg.style.color = 'var(--rust)';
+    backupMsg.textContent = err.message || 'Nie udało się wczytać pliku.';
+  }
+});
+
+/* ---------------- render zbiorczy ---------------- */
+async function renderAll() {
+  await renderVisRow();
+  await renderCalendar();
+  await renderResultsOrDay();
+}
+
+/* ---------------- start ---------------- */
+(async function init() {
+  hiddenCats = await loadHidden();
+  await regenerateSeries();
+  await renderAll();
+  window.__appReady = true;
+})();
+
+})();
+</script>
+</body>
+</html>
