@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#1D7A8C">
+<meta name="theme-color" content="#134C74">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,9 +16,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#E7F1F3; --paper-raised:#F7FBFC; --ink:#17303A; --ink-soft:#5A7480;
-    --ink-faint:#93AAB2; --current:#1D7A8C; --current-dim:#9CCBD2; --sage:#4E9B72;
-    --rust:#B24B4B; --rule:#C7DEE2; --rule-soft:#DEECEF; --hidden-op:.42;
+    --paper:#D7E6F0; --paper-raised:#EEF5FA; --ink:#0E2333; --ink-soft:#42607A;
+    --ink-faint:#7C9AAE; --current:#134C74; --current-dim:#7BAECD; --sage:#4E9B72;
+    --rust:#B24B4B; --rule:#B6D2E3; --rule-soft:#D6E7F0; --hidden-op:.42;
   }
   *{box-sizing:border-box}
   @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
@@ -45,6 +45,7 @@
   textarea:focus,input:focus,select:focus,.chip:focus,button:focus{outline:2px solid var(--current);outline-offset:2px}
   .field-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:5px;display:block}
   .err{color:var(--rust);font-family:'JetBrains Mono',monospace;font-size:11px;margin:-6px 0 10px;min-height:14px}
+  .hint-text{color:var(--ink-soft);font-family:'JetBrains Mono',monospace;font-size:10.5px;margin:-2px 0 10px;line-height:1.5}
 
   .chips{display:flex;gap:7px;flex-wrap:wrap}
   .chips.left{justify-content:flex-start}
@@ -62,9 +63,12 @@
   .stats-line{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);text-align:center;margin:2px 0 14px}
   .stats-line b{color:var(--current);font-weight:600}
 
-  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
   .cal-nav .icon-btn{border:none}
   .cal-month{font-size:16px;font-weight:500}
+  .cal-jump-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft)}
+  .cal-jump-label{display:flex;align-items:center;gap:7px}
+  .cal-jump-row input[type=date]{width:auto;margin:0;padding:6px 8px;font-size:11.5px}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
   .cal-dow{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-align:center;color:var(--ink-faint);padding-bottom:4px;text-transform:uppercase}
   .cal-cell{min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid transparent;color:var(--ink);background:transparent}
@@ -87,11 +91,24 @@
   .log-heading{font-size:13.5px;color:var(--ink-soft);margin:4px 0 8px;display:flex;align-items:center;gap:10px}
   .log-heading::after{content:'';flex:1;height:1px;background:var(--rule)}
 
+  .add-card{border-left:3px solid var(--current);padding-left:14px}
+  .add-heading{font-size:15px;font-weight:500;margin-bottom:2px}
+  .add-sub{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+
+  .wd-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .wd-chip{font-family:'JetBrains Mono',monospace;font-size:11px;width:33px;height:33px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .wd-chip.active{background:var(--current);border-color:var(--current);color:var(--paper-raised)}
+  .wd-quick-row{margin-bottom:12px}
+  .wd-quick{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--current);background:none;border:none;cursor:pointer;text-decoration:underline;padding:2px 4px}
+  .recur-toggle{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;cursor:pointer}
+  .recur-toggle input{width:auto;margin:0}
+
   .entry{padding:12px 0;border-bottom:1px solid var(--rule-soft)}
   .entry:last-child{border-bottom:none}
   .entry-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
   .entry-meta{display:flex;align-items:baseline;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-soft);margin-bottom:4px;flex-wrap:wrap}
   .entry-tag{font-weight:600}
+  .entry-subtitle{font-size:15.5px;font-weight:500;line-height:1.35;margin:1px 0 2px}
   .entry-note{font-size:14px;line-height:1.5;white-space:pre-wrap}
   .entry-actions{display:flex;gap:2px;flex-shrink:0}
   .mini-btn{background:none;border:none;cursor:pointer;padding:4px;color:var(--ink-faint)}
@@ -157,6 +174,13 @@
       <div class="cal-month" id="calMonthLabel" data-testid="cal-month">—</div>
       <button class="icon-btn" id="calNext" data-testid="cal-next">›</button>
     </div>
+    <div class="cal-jump-row">
+      <button type="button" class="vis-quick" id="calTodayBtn" data-testid="cal-today">dziś</button>
+      <span style="color:var(--rule)">·</span>
+      <label class="cal-jump-label">skocz do dnia
+        <input type="date" id="calJumpInput" data-testid="cal-jump-input">
+      </label>
+    </div>
     <div class="cal-grid" id="calGrid" data-testid="cal-grid"></div>
   </div>
 
@@ -166,6 +190,10 @@
 
   <div class="card" id="dayCard" data-testid="day-card">
     <div id="dayPanel" data-testid="day-panel"></div>
+  </div>
+
+  <div class="card add-card" id="addCard" data-testid="add-card">
+    <div id="addPanel" data-testid="add-panel"></div>
   </div>
 
   <div class="card">
@@ -227,11 +255,13 @@ async function loadJSON(key, fb) {
 const saveJSON = (key, val) => Store.set(key, JSON.stringify(val));
 
 const DEFAULT_CATEGORIES = ['plastry', 'witaminy', 'kosmetyki', 'sport'];
-const DEFAULT_CAT_COLORS = { 'plastry': '#1D7A8C', 'witaminy': '#D69A44', 'kosmetyki': '#B97BA6', 'sport': '#4E9B72' };
+const DEFAULT_CAT_COLORS = { 'plastry': '#134C74', 'witaminy': '#D69A44', 'kosmetyki': '#B97BA6', 'sport': '#4E9B72' };
 const FALLBACK_PALETTE = ['#3E7CB1', '#6B6FC4', '#4FA8A0', '#8B7EC8', '#5FA3C0', '#9A82B5', '#5C8F6B', '#C4708A'];
 const RECURRING_HORIZON_WEEKS = 12;
 
+let categoryColorCache = {};
 function colorForCategory(name) {
+  if (categoryColorCache[name]) return categoryColorCache[name];
   if (DEFAULT_CAT_COLORS[name]) return DEFAULT_CAT_COLORS[name];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
@@ -261,6 +291,9 @@ const saveHidden = h => saveJSON('hiddenCategories', asArray(h));
 const loadSeriesMeta = async () => asPlainObject(await loadJSON('seriesMeta', {}));
 const saveSeriesMeta = m => saveJSON('seriesMeta', asPlainObject(m));
 
+const loadCategoryColors = async () => asPlainObject(await loadJSON('categoryColors', {}));
+const saveCategoryColors = c => saveJSON('categoryColors', asPlainObject(c));
+
 /* ---------------- narzędzia ---------------- */
 const MONTHS_GEN = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
 const MONTHS_NOM = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
@@ -289,10 +322,11 @@ function parseClock(raw) {
 }
 function showErr(el, msg) { if (el) el.textContent = msg || ''; }
 
-function makeEntry({ date, time, category, note, favorite, seriesId }) {
+function makeEntry({ date, time, category, subtitle, note, favorite, seriesId }) {
   return {
     id: Date.now() + Math.floor(Math.random() * 100000),
-    date, time: time || '', category, note: (note || '').trim(),
+    date, time: time || '', category,
+    subtitle: (subtitle || '').trim(), note: (note || '').trim(),
     favorite: !!favorite, seriesId: (seriesId === undefined ? null : seriesId)
   };
 }
@@ -316,22 +350,35 @@ function occurrencesBetween(anchorDate, horizonDate) {
   return out;
 }
 
-async function addEntry({ date, time, category, note, recurringWeekday }) {
+/* recurringWeekdays: null/[] dla wpisu jednorazowego, albo tablica dni tygodnia (wartości getDay()),
+   każdy dzień staje się osobną serią (własny seriesId), żeby usuwanie/kończenie jednej serii nie ruszało innych */
+async function addEntry({ date, time, category, subtitle, note, recurringWeekdays }) {
   const entries = await loadEntries();
-  if (recurringWeekday === null || recurringWeekday === undefined) {
-    entries.push(makeEntry({ date, time, category, note, favorite: false, seriesId: null }));
+  const days = Array.isArray(recurringWeekdays) ? recurringWeekdays.filter(n => Number.isInteger(n) && n >= 0 && n <= 6) : [];
+  if (!days.length) {
+    entries.push(makeEntry({ date, time, category, subtitle, note, favorite: false, seriesId: null }));
     await saveEntries(entries);
     return;
   }
-  const seriesId = Date.now() + Math.floor(Math.random() * 100000);
-  const anchor = nextOrSameWeekday(dateFromYmd(date), recurringWeekday);
   const horizon = computeHorizon(new Date());
-  const occ = occurrencesBetween(anchor, horizon);
-  occ.forEach(d => entries.push(makeEntry({ date: ymd(d), time, category, note, favorite: false, seriesId })));
-  await saveEntries(entries);
   const metas = await loadSeriesMeta();
-  metas[String(seriesId)] = { category, weekday: recurringWeekday, time: time || '', generatedUntil: ymd(horizon), endedAt: null };
+  days.forEach((weekday, i) => {
+    const seriesId = Date.now() + i * 97 + Math.floor(Math.random() * 1000);
+    const anchor = nextOrSameWeekday(dateFromYmd(date), weekday);
+    const occ = occurrencesBetween(anchor, horizon);
+    occ.forEach(d => entries.push(makeEntry({ date: ymd(d), time, category, subtitle, note, favorite: false, seriesId })));
+    metas[String(seriesId)] = { category, weekday, time: time || '', generatedUntil: ymd(horizon), endedAt: null };
+  });
+  await saveEntries(entries);
   await saveSeriesMeta(metas);
+}
+
+/* kończy serię od wskazanej daty wzwyż (włącznie) - wcześniejsza historia zostaje bez zmian */
+async function endSeriesFrom(seriesId, fromDate, entries, metas) {
+  const keep = entries.filter(x => !(x.seriesId === seriesId && x.date >= fromDate));
+  const meta = metas[String(seriesId)];
+  if (meta) meta.endedAt = fromDate;
+  return keep;
 }
 
 async function regenerateSeries() {
@@ -446,6 +493,7 @@ function entryStaticHtml(s, showDate) {
           <span class="entry-tag" style="color:${colorForCategory(s.category)}">${esc(s.category)}</span>
           ${s.seriesId ? `<span title="wpis z serii powtarzalnej">↻</span>` : ''}
         </div>
+        ${s.subtitle ? `<div class="entry-subtitle">${esc(s.subtitle)}</div>` : ''}
         ${s.note ? `<div class="entry-note">${esc(s.note)}</div>` : ''}
       </div>
       <div class="entry-actions">
@@ -461,14 +509,44 @@ function entryStaticHtml(s, showDate) {
       </div>
     </div></div>`;
 }
+/* ---------------- wybór wielu dni tygodnia (dodawanie / zmiana wpisu na powtarzalny) ---------------- */
+function weekdayPickerHtml(selected, scope) {
+  const chips = WEEKDAY_OPTIONS.map((wd, i) => `<button type="button" class="wd-chip${selected.has(wd) ? ' active' : ''}" data-wd="${wd}" data-wdscope="${scope}" title="${DAYS_FULL[wd]}">${DOW[i]}</button>`).join('');
+  return `<div class="wd-row" data-wdscope="${scope}">${chips}</div>
+    <div class="wd-quick-row">
+      <button type="button" class="wd-quick" data-wdall="${scope}">cały tydzień</button><span style="color:var(--rule)"> · </span><button type="button" class="wd-quick" data-wdclear="${scope}">wyczyść</button>
+    </div>`;
+}
+function refreshWeekdayChips(root, scope, selectedSet) {
+  root.querySelectorAll(`.wd-chip[data-wdscope="${scope}"]`).forEach(el => el.classList.toggle('active', selectedSet.has(Number(el.dataset.wd))));
+}
+
+let editRecurOn = false;
+let editRecurDays = new Set();
+let editRecurOriginalOn = false;
+let editRecurOriginalDays = new Set();
+function setsEqual(a, b) { if (a.size !== b.size) return false; for (const x of a) if (!b.has(x)) return false; return true; }
+
 function entryEditHtml(s, cats) {
+  const standalone = !s.seriesId;
   return `<div class="entry-edit">
     <span class="field-label">Kategoria</span>
     <div class="chips left edit-tags">${cats.map(c => `<button type="button" class="chip${c === s.category ? ' active' : ''}" data-ecat="${esc(c)}"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</button>`).join('')}</div>
+    <span class="field-label">Podtytuł (opcjonalnie)</span>
+    <input type="text" class="edit-subtitle" value="${esc(s.subtitle)}" placeholder="np. brzuszki, rozciąganie, nogi">
     <span class="field-label">Godzina (opcjonalnie)</span>
     <input type="text" class="edit-time" value="${esc(s.time)}" placeholder="np. 9:00">
-    <span class="field-label">Notatka</span>
+    <span class="field-label">Szczegóły (opcjonalnie)</span>
     <textarea class="edit-note">${esc(s.note)}</textarea>
+    <label class="recur-toggle">
+      <input type="checkbox" class="edit-recur-toggle" ${editRecurOn ? 'checked' : ''}>
+      ${standalone ? 'zamień na wpis powtarzalny co tydzień' : 'powtarzaj co tydzień'}
+    </label>
+    <div class="edit-recur-fields" style="display:${editRecurOn ? 'block' : 'none'}">
+      <span class="field-label">Dni tygodnia</span>
+      ${weekdayPickerHtml(editRecurDays, 'edit')}
+    </div>
+    ${!standalone ? `<div class="hint-text">zmiana dni obowiązuje od tego dnia w przód — wcześniejsze wystąpienia serii zostają bez zmian</div>` : ''}
     <div class="err edit-err"></div>
     <div class="controls" style="display:flex;gap:9px">
       <button class="primary" data-act="save-edit" data-id="${s.id}">Zapisz</button>
@@ -504,7 +582,23 @@ async function handleEntryListClick(e, list, afterChange) {
       const row = chip.closest('.edit-tags');
       row.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
+      return;
     }
+    if (e.target.classList && e.target.classList.contains('edit-recur-toggle')) {
+      editRecurOn = e.target.checked;
+      const fields = e.target.closest('.entry-edit').querySelector('.edit-recur-fields');
+      if (fields) fields.style.display = editRecurOn ? 'block' : 'none';
+      return;
+    }
+    const wdChip = e.target.closest('.wd-chip[data-wdscope="edit"]');
+    if (wdChip) {
+      const wd = Number(wdChip.dataset.wd);
+      if (editRecurDays.has(wd)) editRecurDays.delete(wd); else editRecurDays.add(wd);
+      wdChip.classList.toggle('active');
+      return;
+    }
+    if (e.target.closest('[data-wdall="edit"]')) { WEEKDAY_OPTIONS.forEach(wd => editRecurDays.add(wd)); refreshWeekdayChips(e.currentTarget, 'edit', editRecurDays); return; }
+    if (e.target.closest('[data-wdclear="edit"]')) { editRecurDays.clear(); refreshWeekdayChips(e.currentTarget, 'edit', editRecurDays); return; }
     return;
   }
   const id = Number(btn.dataset.id);
@@ -516,8 +610,17 @@ async function handleEntryListClick(e, list, afterChange) {
     if (s) { s.favorite = !s.favorite; await saveEntries(entries); }
     afterChange(); return;
   }
-  if (act === 'edit') { editingId = id; deletingId = null; afterChange(); return; }
-  if (act === 'cancel-edit') { editingId = null; afterChange(); return; }
+  if (act === 'edit') {
+    editingId = id; deletingId = null;
+    const entries = await loadEntries();
+    const target = entries.find(x => x.id === id);
+    editRecurOn = !!(target && target.seriesId);
+    editRecurDays = new Set(target ? [dateFromYmd(target.date).getDay()] : []);
+    editRecurOriginalOn = editRecurOn;
+    editRecurOriginalDays = new Set(editRecurDays);
+    afterChange(); return;
+  }
+  if (act === 'cancel-edit') { editingId = null; editRecurOn = false; editRecurDays = new Set(); editRecurOriginalOn = false; editRecurOriginalDays = new Set(); afterChange(); return; }
   if (act === 'del') { deletingId = id; editingId = null; afterChange(); return; }
   if (act === 'cancel-del') { deletingId = null; afterChange(); return; }
   if (act === 'confirm-del-one') {
@@ -529,46 +632,87 @@ async function handleEntryListClick(e, list, afterChange) {
     const entries = await loadEntries();
     const target = entries.find(x => x.id === id);
     if (target && target.seriesId) {
-      const keep = entries.filter(x => !(x.seriesId === target.seriesId && x.date >= target.date));
-      await saveEntries(keep);
       const metas = await loadSeriesMeta();
-      const meta = metas[String(target.seriesId)];
-      if (meta) { meta.endedAt = target.date; await saveSeriesMeta(metas); }
+      const keep = await endSeriesFrom(target.seriesId, target.date, entries, metas);
+      await saveEntries(keep);
+      await saveSeriesMeta(metas);
     }
     deletingId = null; afterChange(); await renderCalendar(); return;
   }
   if (act === 'save-edit') {
-    const wrap = e.currentTarget.querySelector(`.entry[data-id="${id}"]`) || document.querySelector(`.entry[data-id="${id}"]`);
+    const wrap = e.currentTarget.querySelector(`.entry[data-id="${id}"]`);
     const errEl = wrap.querySelector('.edit-err');
     const tr = parseClock(wrap.querySelector('.edit-time').value);
     if (!tr.ok) { showErr(errEl, tr.msg); return; }
     const catBtn = wrap.querySelector('.edit-tags .chip.active');
+    const newCategory = catBtn ? catBtn.dataset.ecat : null;
+    const newSubtitle = wrap.querySelector('.edit-subtitle').value.trim();
+    const newNote = wrap.querySelector('.edit-note').value.trim();
+    const recurToggleEl = wrap.querySelector('.edit-recur-toggle');
+    const wantsRecurring = recurToggleEl ? recurToggleEl.checked : false;
+
     const entries = await loadEntries();
     const s = entries.find(x => x.id === id);
-    if (s) {
+    if (!s) { editingId = null; afterChange(); return; }
+    const finalCategory = newCategory || s.category;
+    const recurConfigChanged = wantsRecurring !== editRecurOriginalOn || !setsEqual(editRecurDays, editRecurOriginalDays);
+
+    if (!recurConfigChanged) {
+      // powtarzalność bez zmian — zwykła edycja pól, nie rusza reszty serii
       s.time = tr.value;
-      s.category = catBtn ? catBtn.dataset.ecat : s.category;
-      s.note = wrap.querySelector('.edit-note').value.trim();
+      s.category = finalCategory;
+      s.subtitle = newSubtitle;
+      s.note = newNote;
+      await saveEntries(entries);
+    } else if (wantsRecurring) {
+      if (!editRecurDays.size) { showErr(errEl, 'Wybierz przynajmniej jeden dzień tygodnia.'); return; }
+      let remaining = entries.filter(x => x.id !== id);
+      if (s.seriesId) {
+        const metas = await loadSeriesMeta();
+        remaining = await endSeriesFrom(s.seriesId, s.date, remaining, metas);
+        await saveSeriesMeta(metas);
+      }
+      await saveEntries(remaining);
+      await addEntry({ date: s.date, time: tr.value, category: finalCategory, subtitle: newSubtitle, note: newNote, recurringWeekdays: [...editRecurDays] });
+    } else if (s.seriesId) {
+      // zdejmij to jedno wystąpienie z serii i zakończ serię od tego dnia wzwyż; wcześniejsza historia zostaje
+      const metas = await loadSeriesMeta();
+      let remaining = entries.filter(x => x.id !== id);
+      remaining = await endSeriesFrom(s.seriesId, s.date, remaining, metas);
+      await saveSeriesMeta(metas);
+      remaining.push(makeEntry({ date: s.date, time: tr.value, category: finalCategory, subtitle: newSubtitle, note: newNote, favorite: s.favorite, seriesId: null }));
+      await saveEntries(remaining);
+    } else {
+      s.time = tr.value;
+      s.category = finalCategory;
+      s.subtitle = newSubtitle;
+      s.note = newNote;
       await saveEntries(entries);
     }
-    editingId = null; afterChange(); await renderCalendar(); return;
+    editingId = null; editRecurOn = false; editRecurDays = new Set();
+    afterChange(); await renderCalendar(); return;
   }
 }
 
 /* ================= PANEL DNIA / WYNIKI WYSZUKIWANIA ================= */
 const CAL = { year: new Date().getFullYear(), month: new Date().getMonth(), selected: ymd(new Date()) };
 const dayPanel = $('dayPanel'), dayCard = $('dayCard'), resultsPanel = $('resultsPanel'), resultsCard = $('resultsCard');
+const addCard = $('addCard'), addPanel = $('addPanel');
 const addRef = { value: 'plastry' };
+let addRecurDays = new Set();
 
 function searchActive() { return F.search !== '' || F.favOnly; }
 
 async function renderResultsOrDay() {
   if (searchActive()) {
-    resultsCard.style.display = ''; dayCard.style.display = 'none';
+    resultsCard.style.display = ''; dayCard.style.display = 'none'; addCard.style.display = 'none';
+    dayPanel.innerHTML = ''; addPanel.innerHTML = '';
     await renderResults();
   } else {
-    resultsCard.style.display = 'none'; dayCard.style.display = '';
-    await renderDayPanel();
+    resultsCard.style.display = 'none'; dayCard.style.display = ''; addCard.style.display = '';
+    resultsPanel.innerHTML = '';
+    await renderDayEntries();
+    await renderAddForm();
   }
 }
 
@@ -577,7 +721,7 @@ async function renderResults() {
   const filtered = all.filter(s => {
     if (F.favOnly && !s.favorite) return false;
     if (F.search) {
-      const hay = ((s.note || '') + ' ' + s.category).toLowerCase();
+      const hay = ((s.note || '') + ' ' + (s.subtitle || '') + ' ' + s.category).toLowerCase();
       if (!hay.includes(F.search)) return false;
     }
     return true;
@@ -594,7 +738,7 @@ let catsCache = DEFAULT_CATEGORIES.slice();
 
 resultsPanel.addEventListener('click', e => handleEntryListClick(e, null, renderResultsOrDay));
 
-async function renderDayPanel() {
+async function renderDayEntries() {
   catsCache = await loadCategories();
   const key = CAL.selected;
   const entries = (await loadEntries()).filter(s => s.date === key && isVisible(s.category)).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
@@ -605,33 +749,38 @@ async function renderDayPanel() {
   html += entries.length
     ? entries.map(s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, false)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`).join('')
     : `<div class="empty-log">Brak wpisów tego dnia.</div>`;
+  dayPanel.innerHTML = html;
+}
 
-  html += `<div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--rule)">
-    <span class="field-label">Dodaj wpis</span>
+dayPanel.addEventListener('click', e => handleEntryListClick(e, null, renderResultsOrDay));
+
+async function renderAddForm() {
+  const key = CAL.selected;
+  const [y, m, d] = key.split('-').map(Number);
+  const shortLabel = `${d} ${MONTHS_ABBR[m - 1]} ${y}${key === ymd(new Date()) ? ' · dziś' : ''}`;
+  const curDow = dateFromYmd(key).getDay();
+  if (!addRecurDays.size) addRecurDays = new Set([curDow]);
+
+  addPanel.innerHTML = `
+    <div class="add-heading">Dodaj wpis</div>
+    <div class="add-sub">${esc(shortLabel)}</div>
     <div class="chips left" id="addTagRow" data-testid="add-tag-row"></div>
-    <span class="field-label" style="margin-top:10px">Godzina (opcjonalnie)</span>
+    <span class="field-label" style="margin-top:10px">Podtytuł (opcjonalnie)</span>
+    <input type="text" id="addSubtitle" data-testid="add-subtitle" placeholder="np. brzuszki, rozciąganie, nogi">
+    <span class="field-label">Godzina (opcjonalnie)</span>
     <input type="text" id="addTime" data-testid="add-time" placeholder="np. 8:00">
-    <span class="field-label">Notatka (opcjonalnie)</span>
-    <textarea id="addNote" data-testid="add-note" placeholder="np. plaster na lewym ramieniu"></textarea>
-    <label style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;cursor:pointer">
-      <input type="checkbox" id="addRecurring" data-testid="add-recurring" style="width:auto;margin:0">
+    <span class="field-label">Szczegóły (opcjonalnie)</span>
+    <textarea id="addNote" data-testid="add-note" placeholder="np. 3 serie po 15 powtórzeń"></textarea>
+    <label class="recur-toggle">
+      <input type="checkbox" id="addRecurring" data-testid="add-recurring">
       powtarzaj co tydzień
     </label>
     <div id="recurringFields" style="display:none">
-      <span class="field-label">Dzień tygodnia</span>
-      <select id="recurWeekday" data-testid="recur-weekday"></select>
+      <span class="field-label">Dni tygodnia</span>
+      ${weekdayPickerHtml(addRecurDays, 'add')}
     </div>
     <div class="err" id="addErr" data-testid="add-err"></div>
-    <div class="controls" style="display:flex;gap:9px"><button class="primary" id="addSaveBtn" data-testid="add-save">Dodaj wpis</button></div>
-  </div>`;
-
-  dayPanel.innerHTML = html;
-
-  const weekdaySel = $('recurWeekday');
-  const curDow = dateFromYmd(key).getDay();
-  weekdaySel.innerHTML = WEEKDAY_OPTIONS.map((wd, i) => `<option value="${wd}" ${wd === curDow ? 'selected' : ''}>${DOW[i]} · ${DAYS_FULL[wd]}</option>`).join('');
-
-  $('addRecurring').addEventListener('change', () => { $('recurringFields').style.display = $('addRecurring').checked ? 'block' : 'none'; });
+    <div class="controls" style="display:flex;gap:9px"><button class="primary" id="addSaveBtn" data-testid="add-save">Dodaj wpis</button></div>`;
 
   await renderCatChips($('addTagRow'), addRef, true);
   wireCatChips($('addTagRow'), addRef, true);
@@ -639,20 +788,49 @@ async function renderDayPanel() {
   $('addSaveBtn').addEventListener('click', async () => {
     const tr = parseClock($('addTime').value);
     if (!tr.ok) { showErr($('addErr'), tr.msg); return; }
-    showErr($('addErr'), '');
     const recurring = $('addRecurring').checked;
-    const weekday = recurring ? Number(weekdaySel.value) : null;
-    await addEntry({ date: key, time: tr.value, category: addRef.value, note: $('addNote').value, recurringWeekday: weekday });
+    if (recurring && !addRecurDays.size) { showErr($('addErr'), 'Wybierz przynajmniej jeden dzień tygodnia.'); return; }
+    showErr($('addErr'), '');
+    await addEntry({ date: key, time: tr.value, category: addRef.value, subtitle: $('addSubtitle').value, note: $('addNote').value, recurringWeekdays: recurring ? [...addRecurDays] : null });
+    addRecurDays = new Set();
     await renderAll();
   });
 }
 
-dayPanel.addEventListener('click', e => handleEntryListClick(e, null, renderResultsOrDay));
+addPanel.addEventListener('click', e => {
+  if (e.target.closest('#addTagRow')) return; // obsłużone przez wireCatChips
+  if (e.target.id === 'addRecurring') {
+    $('recurringFields').style.display = $('addRecurring').checked ? 'block' : 'none';
+    return;
+  }
+  const wdChip = e.target.closest('.wd-chip[data-wdscope="add"]');
+  if (wdChip) {
+    const wd = Number(wdChip.dataset.wd);
+    if (addRecurDays.has(wd)) addRecurDays.delete(wd); else addRecurDays.add(wd);
+    wdChip.classList.toggle('active');
+    return;
+  }
+  if (e.target.closest('[data-wdall="add"]')) { WEEKDAY_OPTIONS.forEach(wd => addRecurDays.add(wd)); refreshWeekdayChips(addPanel, 'add', addRecurDays); return; }
+  if (e.target.closest('[data-wdclear="add"]')) { addRecurDays.clear(); refreshWeekdayChips(addPanel, 'add', addRecurDays); return; }
+});
 
 /* ================= KALENDARZ ================= */
 const calGrid = $('calGrid');
 $('calPrev').addEventListener('click', () => { CAL.month--; if (CAL.month < 0) { CAL.month = 11; CAL.year--; } renderCalendar(); });
 $('calNext').addEventListener('click', () => { CAL.month++; if (CAL.month > 11) { CAL.month = 0; CAL.year++; } renderCalendar(); });
+
+function jumpToDate(dateStr) {
+  const d = dateFromYmd(dateStr);
+  CAL.year = d.getFullYear(); CAL.month = d.getMonth(); CAL.selected = dateStr;
+  editingId = null; deletingId = null;
+  renderCalendar();
+  if (!searchActive()) renderResultsOrDay();
+}
+$('calTodayBtn').addEventListener('click', () => { jumpToDate(ymd(new Date())); });
+$('calJumpInput').addEventListener('change', () => {
+  const v = $('calJumpInput').value;
+  if (v && DATE_RE.test(v)) jumpToDate(v);
+});
 
 async function renderStats(entries) {
   const [y, m] = [CAL.year, CAL.month];
@@ -695,6 +873,8 @@ async function renderCalendar() {
     html += `<div class="${cls.join(' ')}" data-date="${key}"><div>${d}</div>${marks}</div>`;
   }
   calGrid.innerHTML = html;
+  const jumpInput = $('calJumpInput');
+  if (jumpInput && document.activeElement !== jumpInput) jumpInput.value = CAL.selected || '';
   await renderStats(entries);
 }
 calGrid.addEventListener('click', e => {
@@ -703,7 +883,7 @@ calGrid.addEventListener('click', e => {
   CAL.selected = cell.dataset.date;
   editingId = null; deletingId = null;
   renderCalendar();
-  if (!searchActive()) renderDayPanel();
+  if (!searchActive()) renderResultsOrDay();
 });
 
 /* ================= ZARZĄDZANIE KATEGORIAMI ================= */
@@ -711,11 +891,12 @@ const catMgrPanel = $('catMgrPanel');
 let catPendingDelete = null;
 let catDeleteAction = 'delete';
 let catSubstitute = null;
+let catPendingRename = null;
 
 $('toggleCatMgrBtn').addEventListener('click', async () => {
   const panel = $('catMgrPanel');
   if (panel.classList.contains('visible')) { panel.classList.remove('visible'); }
-  else { panel.classList.add('visible'); catPendingDelete = null; await renderCatMgr(); }
+  else { panel.classList.add('visible'); catPendingDelete = null; catPendingRename = null; await renderCatMgr(); }
 });
 
 async function countEntriesFor(cat) {
@@ -727,7 +908,17 @@ async function renderCatMgr() {
   const cats = await loadCategories();
   let html = '';
   for (const c of cats) {
-    if (catPendingDelete === c) {
+    if (catPendingRename === c) {
+      html += `<div class="cat-manage-row" style="flex-direction:column;align-items:stretch">
+        <span class="field-label">Nowa nazwa kategorii</span>
+        <input type="text" id="renameCatInput" data-testid="rename-cat-input" value="${esc(c)}">
+        <div class="err" id="renameCatErr" data-testid="rename-cat-err"></div>
+        <div class="confirm-actions">
+          <button class="primary" data-mact="confirm-rename-cat" data-cat="${esc(c)}">Zapisz nazwę</button>
+          <button class="ghost" data-mact="cancel-rename-cat">Anuluj</button>
+        </div>
+      </div>`;
+    } else if (catPendingDelete === c) {
       const n = await countEntriesFor(c);
       const others = cats.filter(x => x !== c);
       if (!catSubstitute || !others.includes(catSubstitute)) catSubstitute = others[0] || null;
@@ -749,6 +940,9 @@ async function renderCatMgr() {
     } else {
       html += `<div class="cat-manage-row">
         <div class="cat-manage-name"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</div>
+        <button class="mini-btn" data-mact="rename-cat" data-cat="${esc(c)}" title="zmień nazwę">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
         <button class="mini-btn" data-mact="del-cat" data-cat="${esc(c)}" title="usuń kategorię">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
         </button>
@@ -772,7 +966,24 @@ catMgrPanel.addEventListener('click', async e => {
   const btn = e.target.closest('[data-mact]');
   if (btn) {
     const act = btn.dataset.mact;
-    if (act === 'del-cat') { catPendingDelete = btn.dataset.cat; catDeleteAction = 'delete'; catSubstitute = null; await renderCatMgr(); return; }
+    if (act === 'rename-cat') { catPendingRename = btn.dataset.cat; catPendingDelete = null; await renderCatMgr(); return; }
+    if (act === 'cancel-rename-cat') { catPendingRename = null; await renderCatMgr(); return; }
+    if (act === 'confirm-rename-cat') {
+      const oldName = btn.dataset.cat;
+      const input = $('renameCatInput');
+      const newName = (input.value || '').trim();
+      if (!newName) { showErr($('renameCatErr'), 'Podaj nazwę kategorii.'); return; }
+      if (newName !== oldName) {
+        const cats = await loadCategories();
+        if (cats.includes(newName)) { showErr($('renameCatErr'), 'Taka kategoria już istnieje.'); return; }
+        await renameCategory(oldName, newName);
+      }
+      catPendingRename = null;
+      await renderCatMgr();
+      await renderAll();
+      return;
+    }
+    if (act === 'del-cat') { catPendingDelete = btn.dataset.cat; catPendingRename = null; catDeleteAction = 'delete'; catSubstitute = null; await renderCatMgr(); return; }
     if (act === 'cancel-del-cat') { catPendingDelete = null; await renderCatMgr(); return; }
     if (act === 'confirm-del-cat') {
       const name = btn.dataset.cat;
@@ -798,6 +1009,32 @@ catMgrPanel.addEventListener('click', async e => {
     await renderAll();
   }
 });
+
+async function renameCategory(oldName, newName) {
+  const cats = await loadCategories();
+  const idx = cats.indexOf(oldName);
+  if (idx === -1) return;
+  const resolvedColor = colorForCategory(oldName);
+  cats[idx] = newName;
+  await saveCategories(cats);
+
+  const colors = await loadCategoryColors();
+  delete colors[oldName];
+  colors[newName] = resolvedColor;
+  await saveCategoryColors(colors);
+  categoryColorCache = colors;
+
+  const entries = await loadEntries();
+  entries.forEach(e => { if (e.category === oldName) e.category = newName; });
+  await saveEntries(entries);
+
+  const metas = await loadSeriesMeta();
+  Object.keys(metas).forEach(id => { if (metas[id] && metas[id].category === oldName) metas[id].category = newName; });
+  await saveSeriesMeta(metas);
+
+  hiddenCats = hiddenCats.map(c => c === oldName ? newName : c);
+  await saveHidden(hiddenCats);
+}
 
 async function deleteCategory(name, action, substitute) {
   const cats = (await loadCategories()).filter(c => c !== name);
@@ -826,10 +1063,10 @@ const BACKUP_VERSION = 1;
 const backupMsg = $('backupMsg');
 
 async function gatherBackup() {
-  const [entries, categories, seriesMeta, hidden] = await Promise.all([
-    loadEntries(), loadCategories(), loadSeriesMeta(), loadHidden()
+  const [entries, categories, seriesMeta, hidden, catColors] = await Promise.all([
+    loadEntries(), loadCategories(), loadSeriesMeta(), loadHidden(), loadCategoryColors()
   ]);
-  return { app: 'kalendarz-nawykow', version: BACKUP_VERSION, exportedAt: new Date().toISOString(), entries, categories, seriesMeta, hiddenCategories: hidden };
+  return { app: 'kalendarz-nawykow', version: BACKUP_VERSION, exportedAt: new Date().toISOString(), entries, categories, seriesMeta, hiddenCategories: hidden, categoryColors: catColors };
 }
 
 function sanitizeBackupPayload(data) {
@@ -841,6 +1078,7 @@ function sanitizeBackupPayload(data) {
       date: e.date,
       time: (typeof e.time === 'string' && parseClock(e.time).ok) ? parseClock(e.time).value : '',
       category: String(e.category).trim(),
+      subtitle: typeof e.subtitle === 'string' ? e.subtitle : '',
       note: typeof e.note === 'string' ? e.note : '',
       favorite: !!e.favorite,
       seriesId: (typeof e.seriesId === 'number') ? e.seriesId : null
@@ -862,11 +1100,17 @@ function sanitizeBackupPayload(data) {
     };
   });
   const hiddenCategories = asArray(data.hiddenCategories).filter(c => typeof c === 'string');
+  const colorsRaw = asPlainObject(data.categoryColors);
+  const categoryColors = {};
+  Object.keys(colorsRaw).forEach(name => {
+    if (typeof colorsRaw[name] === 'string' && /^#[0-9a-fA-F]{6}$/.test(colorsRaw[name])) categoryColors[name] = colorsRaw[name];
+  });
   return {
     entries,
     categories: categories.length ? categories : DEFAULT_CATEGORIES.slice(),
     seriesMeta,
-    hiddenCategories
+    hiddenCategories,
+    categoryColors
   };
 }
 
@@ -919,6 +1163,8 @@ $('importFile').addEventListener('change', async e => {
     await saveCategories(clean.categories);
     await saveSeriesMeta(clean.seriesMeta);
     await saveHidden(clean.hiddenCategories);
+    await saveCategoryColors(clean.categoryColors);
+    categoryColorCache = clean.categoryColors;
     hiddenCats = clean.hiddenCategories.slice();
     backupMsg.style.color = 'var(--sage)';
     backupMsg.textContent = `Przywrócono ${clean.entries.length} ${clean.entries.length === 1 ? 'wpis' : 'wpisów'}.`;
@@ -939,6 +1185,7 @@ async function renderAll() {
 /* ---------------- start ---------------- */
 (async function init() {
   hiddenCats = await loadHidden();
+  categoryColorCache = await loadCategoryColors();
   await regenerateSeries();
   await renderAll();
   window.__appReady = true;
