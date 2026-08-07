@@ -210,6 +210,8 @@
       <button class="link-btn" id="importBtn" data-testid="import-btn">przywróć z kopii</button>
       <input type="file" id="importFile" data-testid="import-file" accept="application/json,.json" style="display:none">
       <div class="err" id="backupMsg" data-testid="backup-msg"></div>
+      <div class="hint-text" id="autoBackupInfo" data-testid="auto-backup-info"></div>
+      <div id="liveMirrorRow" data-testid="live-mirror-row" style="display:none;margin-top:6px"></div>
     </div>
   </div>
 
@@ -252,7 +254,26 @@ async function loadJSON(key, fb) {
   if (raw === null || raw === undefined) return fb;
   try { const v = JSON.parse(raw); return (v === null || v === undefined) ? fb : v; } catch (e) { return fb; }
 }
-const saveJSON = (key, val) => Store.set(key, JSON.stringify(val));
+/* połączony plik na dysku (File System Access API, tylko wspierające przeglądarki) - jeśli podpięty,
+   każda zmiana danych cicho dopisuje się do niego, bez pobierania kolejnych plików */
+let liveFileHandle = null;
+let liveMirrorTimer = null;
+async function writeToHandle(handle, json) {
+  const writable = await handle.createWritable();
+  await writable.write(json);
+  await writable.close();
+}
+function scheduleLiveMirror() {
+  if (!liveFileHandle) return;
+  clearTimeout(liveMirrorTimer);
+  liveMirrorTimer = setTimeout(async () => {
+    try {
+      const data = await gatherBackup();
+      await writeToHandle(liveFileHandle, JSON.stringify(data, null, 2));
+    } catch (e) { liveFileHandle = null; if (typeof renderLiveMirrorRow === 'function') await renderLiveMirrorRow(); }
+  }, 800);
+}
+const saveJSON = (key, val) => { const p = Store.set(key, JSON.stringify(val)); scheduleLiveMirror(); return p; };
 
 const DEFAULT_CATEGORIES = ['plastry', 'witaminy', 'kosmetyki', 'sport'];
 const DEFAULT_CAT_COLORS = { 'plastry': '#134C74', 'witaminy': '#D69A44', 'kosmetyki': '#B97BA6', 'sport': '#4E9B72' };
@@ -1061,6 +1082,11 @@ async function deleteCategory(name, action, substitute) {
 /* ---------------- kopia zapasowa: eksport / import ---------------- */
 const BACKUP_VERSION = 1;
 const backupMsg = $('backupMsg');
+const autoBackupInfo = $('autoBackupInfo');
+const liveMirrorRow = $('liveMirrorRow');
+const AUTO_BACKUP_INTERVAL_DAYS = 7;
+const supportsFileHandle = typeof window.showSaveFilePicker === 'function';
+const daysBetween = (a, b) => Math.floor((b - a) / 86400000);
 
 async function gatherBackup() {
   const [entries, categories, seriesMeta, hidden, catColors] = await Promise.all([
@@ -1114,35 +1140,92 @@ function sanitizeBackupPayload(data) {
   };
 }
 
-$('exportBtn').addEventListener('click', async () => {
-  showErr(backupMsg, '');
-  const data = await gatherBackup();
+async function writeBackupToDisk(data, { silent } = {}) {
   const json = JSON.stringify(data, null, 2);
   const filename = `nawyki-kopia-${ymd(new Date())}.json`;
 
-  try {
-    if (typeof Blob !== 'undefined') {
-      const blob = new Blob([json], { type: 'application/json' });
-      if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && typeof File !== 'undefined') {
-        const file = new File([blob], filename, { type: 'application/json' });
-        if (navigator.canShare({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Kopia zapasowa: Kalendarz nawyków' }); backupMsg.textContent = 'Wysłano do udostępnienia.'; backupMsg.style.color = 'var(--sage)'; return; }
-          catch (shareErr) { /* anulowane albo niedostępne, spróbuj pobrania */ }
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      backupMsg.style.color = 'var(--sage)';
-      backupMsg.textContent = `Pobrano: ${filename}`;
-    }
-  } catch (e) {
-    backupMsg.style.color = 'var(--rust)';
-    backupMsg.textContent = 'Nie udało się wyeksportować pliku.';
+  if (liveFileHandle) {
+    try {
+      await writeToHandle(liveFileHandle, json);
+      if (!silent) { backupMsg.style.color = 'var(--sage)'; backupMsg.textContent = `Zapisano do połączonego pliku: ${liveFileHandle.name}`; }
+      return true;
+    } catch (e) { liveFileHandle = null; await renderLiveMirrorRow(); /* spadnij do zwykłego pobrania poniżej */ }
   }
+
+  try {
+    if (typeof Blob === 'undefined') return false;
+    const blob = new Blob([json], { type: 'application/json' });
+    if (!silent && typeof navigator !== 'undefined' && navigator.share && navigator.canShare && typeof File !== 'undefined') {
+      const file = new File([blob], filename, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: 'Kopia zapasowa: Kalendarz nawyków' }); backupMsg.textContent = 'Wysłano do udostępnienia.'; backupMsg.style.color = 'var(--sage)'; return true; }
+        catch (shareErr) { /* anulowane albo niedostępne, spróbuj pobrania */ }
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (!silent) { backupMsg.style.color = 'var(--sage)'; backupMsg.textContent = `Pobrano: ${filename}`; }
+    return true;
+  } catch (e) {
+    if (!silent) { backupMsg.style.color = 'var(--rust)'; backupMsg.textContent = 'Nie udało się wyeksportować pliku.'; }
+    return false;
+  }
+}
+
+$('exportBtn').addEventListener('click', async () => {
+  showErr(backupMsg, '');
+  const data = await gatherBackup();
+  const ok = await writeBackupToDisk(data, { silent: false });
+  if (ok) { await Store.set('lastAutoBackup', ymd(new Date())); await renderAutoBackupInfo(); }
 });
+
+/* automatyczna, cykliczna kopia zapasowa - bez klikania, bez gita, zawsze coś leży na dysku */
+async function renderAutoBackupInfo() {
+  try {
+    const last = await Store.get('lastAutoBackup');
+    if (!last) { autoBackupInfo.textContent = 'automatyczna kopia: jeszcze żadnej — zapisze się przy pierwszej okazji'; return; }
+    const days = daysBetween(dateFromYmd(last), new Date());
+    autoBackupInfo.textContent = days <= 0 ? 'automatyczna kopia: dzisiaj' : `automatyczna kopia: ${days} ${days === 1 ? 'dzień' : 'dni'} temu`;
+  } catch (e) { /* nieistotne dla działania appki */ }
+}
+async function maybeAutoBackup() {
+  try {
+    const last = await Store.get('lastAutoBackup');
+    const today = new Date();
+    if (last) {
+      const days = daysBetween(dateFromYmd(last), today);
+      if (days < AUTO_BACKUP_INTERVAL_DAYS) return;
+    }
+    const data = await gatherBackup();
+    if (!data.entries.length && !last) return; // nie ma jeszcze czego zapisywać
+    const ok = await writeBackupToDisk(data, { silent: true });
+    if (ok) await Store.set('lastAutoBackup', ymd(today));
+  } catch (e) { /* cichy backup nie może wywrócić appki */ }
+}
+
+/* opcjonalnie: podpięcie pliku na dysku, żeby appka pisała do niego na bieżąco (Chrome/Edge na komputerze) */
+async function renderLiveMirrorRow() {
+  if (!supportsFileHandle) { liveMirrorRow.style.display = 'none'; return; }
+  liveMirrorRow.style.display = 'block';
+  if (liveFileHandle) {
+    liveMirrorRow.innerHTML = `<span class="hint-text">🔗 na bieżąco zapisuje do „${esc(liveFileHandle.name)}” (do zamknięcia karty)</span> <button type="button" class="link-btn" id="unlinkFileBtn" data-testid="unlink-file-btn">odłącz</button>`;
+    $('unlinkFileBtn').addEventListener('click', async () => { liveFileHandle = null; await renderLiveMirrorRow(); });
+  } else {
+    liveMirrorRow.innerHTML = `<button type="button" class="link-btn" id="linkFileBtn" data-testid="link-file-btn">połącz z plikiem na dysku (na tę kartę)</button>`;
+    $('linkFileBtn').addEventListener('click', async () => {
+      try {
+        const handle = await window.showSaveFilePicker({ suggestedName: 'nawyki-kopia.json', types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }] });
+        liveFileHandle = handle;
+        const data = await gatherBackup();
+        await writeToHandle(liveFileHandle, JSON.stringify(data, null, 2));
+        await renderLiveMirrorRow();
+      } catch (e) { /* użytkownik anulował wybór pliku */ }
+    });
+  }
+}
 
 $('importBtn').addEventListener('click', () => {
   showErr(backupMsg, '');
@@ -1188,6 +1271,9 @@ async function renderAll() {
   categoryColorCache = await loadCategoryColors();
   await regenerateSeries();
   await renderAll();
+  await renderLiveMirrorRow();
+  await maybeAutoBackup();
+  await renderAutoBackupInfo();
   window.__appReady = true;
 })();
 
