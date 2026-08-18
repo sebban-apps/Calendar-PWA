@@ -133,6 +133,12 @@
   .cat-manage-name{flex:1;font-size:14px;display:flex;align-items:center;gap:8px}
   .add-cat-form{display:flex;gap:7px;margin-top:10px}
   .add-cat-form input{margin-bottom:0;flex:1}
+  .mini-color-dot{width:15px;height:15px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.12)}
+  .swatch-grid{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;flex-shrink:0}
+  .swatch.active{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper-raised) inset}
+  .custom-color-row{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap}
+  .custom-color-row input[type=color]{width:44px;height:34px;padding:2px;margin:0;cursor:pointer}
 </style>
 </head>
 <body>
@@ -276,8 +282,23 @@ function scheduleLiveMirror() {
 const saveJSON = (key, val) => { const p = Store.set(key, JSON.stringify(val)); scheduleLiveMirror(); return p; };
 
 const DEFAULT_CATEGORIES = ['plastry', 'witaminy', 'kosmetyki', 'sport'];
-const DEFAULT_CAT_COLORS = { 'plastry': '#134C74', 'witaminy': '#D69A44', 'kosmetyki': '#B97BA6', 'sport': '#4E9B72' };
-const FALLBACK_PALETTE = ['#3E7CB1', '#6B6FC4', '#4FA8A0', '#8B7EC8', '#5FA3C0', '#9A82B5', '#5C8F6B', '#C4708A'];
+/* 12 celowo dobranych, wyraźnie odróżnialnych kolorów (rozłożone po kole barw, spójna głębia/nasycenie) -
+   to z nich można wybierać ręcznie, i to z nich losowane są kolory dla nowych kategorii bez wyboru */
+const CATEGORY_COLOR_PALETTE = [
+  '#B2503F', // ceglasty
+  '#C98A3D', // bursztynowy
+  '#8C9C3E', // oliwkowy
+  '#4E9B72', // zielony
+  '#3E9C97', // morski
+  '#1D7A8C', // turkusowy
+  '#2E6FA8', // błękitny
+  '#134C74', // granatowy
+  '#5C5FA8', // indygo
+  '#8C4B9C', // fioletowy
+  '#B9508C', // śliwkowy
+  '#C4708A'  // różowy
+];
+const DEFAULT_CAT_COLORS = { 'plastry': '#134C74', 'witaminy': '#C98A3D', 'kosmetyki': '#C4708A', 'sport': '#4E9B72' };
 const RECURRING_HORIZON_WEEKS = 12;
 
 let categoryColorCache = {};
@@ -286,7 +307,19 @@ function colorForCategory(name) {
   if (DEFAULT_CAT_COLORS[name]) return DEFAULT_CAT_COLORS[name];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return FALLBACK_PALETTE[h % FALLBACK_PALETTE.length];
+  return CATEGORY_COLOR_PALETTE[h % CATEGORY_COLOR_PALETTE.length];
+}
+async function setCategoryColor(name, hex) {
+  const colors = await loadCategoryColors();
+  colors[name] = hex;
+  await saveCategoryColors(colors);
+  categoryColorCache = colors;
+}
+async function clearCategoryColor(name) {
+  const colors = await loadCategoryColors();
+  delete colors[name];
+  await saveCategoryColors(colors);
+  categoryColorCache = colors;
 }
 
 /* strażnicy typów: chronią przed uszkodzonymi danymi w magazynie */
@@ -913,11 +946,12 @@ let catPendingDelete = null;
 let catDeleteAction = 'delete';
 let catSubstitute = null;
 let catPendingRename = null;
+let catPendingColor = null;
 
 $('toggleCatMgrBtn').addEventListener('click', async () => {
   const panel = $('catMgrPanel');
   if (panel.classList.contains('visible')) { panel.classList.remove('visible'); }
-  else { panel.classList.add('visible'); catPendingDelete = null; catPendingRename = null; await renderCatMgr(); }
+  else { panel.classList.add('visible'); catPendingDelete = null; catPendingRename = null; catPendingColor = null; await renderCatMgr(); }
 });
 
 async function countEntriesFor(cat) {
@@ -925,11 +959,31 @@ async function countEntriesFor(cat) {
   return entries.filter(s => s.category === cat).length;
 }
 
+function colorPickerHtml(c) {
+  const current = colorForCategory(c);
+  const isCustom = !!categoryColorCache[c];
+  const swatches = CATEGORY_COLOR_PALETTE.map(hex => `<button type="button" class="swatch${hex.toLowerCase() === current.toLowerCase() ? ' active' : ''}" data-mact="pick-color" data-cat="${esc(c)}" data-hex="${hex}" style="background:${hex}" aria-label="${hex}"></button>`).join('');
+  return `<div class="cat-manage-row" style="flex-direction:column;align-items:stretch">
+    <span class="field-label">Kolor kategorii „${esc(c)}”</span>
+    <div class="swatch-grid">${swatches}</div>
+    <div class="custom-color-row">
+      <input type="color" id="customColorInput" data-testid="custom-color-input" value="${current}">
+      <span class="field-label" style="margin:0">własny kolor</span>
+      ${isCustom ? `<button type="button" class="wd-quick" data-mact="reset-color" data-cat="${esc(c)}">przywróć domyślny</button>` : ''}
+    </div>
+    <div class="confirm-actions">
+      <button class="ghost" data-mact="cancel-color-cat">Zamknij</button>
+    </div>
+  </div>`;
+}
+
 async function renderCatMgr() {
   const cats = await loadCategories();
   let html = '';
   for (const c of cats) {
-    if (catPendingRename === c) {
+    if (catPendingColor === c) {
+      html += colorPickerHtml(c);
+    } else if (catPendingRename === c) {
       html += `<div class="cat-manage-row" style="flex-direction:column;align-items:stretch">
         <span class="field-label">Nowa nazwa kategorii</span>
         <input type="text" id="renameCatInput" data-testid="rename-cat-input" value="${esc(c)}">
@@ -961,6 +1015,9 @@ async function renderCatMgr() {
     } else {
       html += `<div class="cat-manage-row">
         <div class="cat-manage-name"><span class="cat-dot" style="background:${colorForCategory(c)}"></span>${esc(c)}</div>
+        <button class="mini-btn" data-mact="pick-color-open" data-cat="${esc(c)}" title="zmień kolor">
+          <span class="mini-color-dot" style="background:${colorForCategory(c)}"></span>
+        </button>
         <button class="mini-btn" data-mact="rename-cat" data-cat="${esc(c)}" title="zmień nazwę">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
@@ -981,13 +1038,32 @@ async function renderCatMgr() {
 catMgrPanel.addEventListener('change', e => {
   if (e.target.name === 'catDelAction') { catDeleteAction = e.target.value; renderCatMgr(); }
   if (e.target.id === 'catSubSelect') { catSubstitute = e.target.value; }
+  if (e.target.id === 'customColorInput' && catPendingColor) {
+    setCategoryColor(catPendingColor, e.target.value).then(async () => { await renderCatMgr(); await renderAll(); });
+  }
 });
 
 catMgrPanel.addEventListener('click', async e => {
   const btn = e.target.closest('[data-mact]');
   if (btn) {
     const act = btn.dataset.mact;
-    if (act === 'rename-cat') { catPendingRename = btn.dataset.cat; catPendingDelete = null; await renderCatMgr(); return; }
+    if (act === 'pick-color-open') { catPendingColor = btn.dataset.cat; catPendingRename = null; catPendingDelete = null; await renderCatMgr(); return; }
+    if (act === 'cancel-color-cat') { catPendingColor = null; await renderCatMgr(); return; }
+    if (act === 'pick-color') {
+      await setCategoryColor(btn.dataset.cat, btn.dataset.hex);
+      catPendingColor = null;
+      await renderCatMgr();
+      await renderAll();
+      return;
+    }
+    if (act === 'reset-color') {
+      await clearCategoryColor(btn.dataset.cat);
+      catPendingColor = null;
+      await renderCatMgr();
+      await renderAll();
+      return;
+    }
+    if (act === 'rename-cat') { catPendingRename = btn.dataset.cat; catPendingDelete = null; catPendingColor = null; await renderCatMgr(); return; }
     if (act === 'cancel-rename-cat') { catPendingRename = null; await renderCatMgr(); return; }
     if (act === 'confirm-rename-cat') {
       const oldName = btn.dataset.cat;
@@ -1004,7 +1080,7 @@ catMgrPanel.addEventListener('click', async e => {
       await renderAll();
       return;
     }
-    if (act === 'del-cat') { catPendingDelete = btn.dataset.cat; catPendingRename = null; catDeleteAction = 'delete'; catSubstitute = null; await renderCatMgr(); return; }
+    if (act === 'del-cat') { catPendingDelete = btn.dataset.cat; catPendingRename = null; catPendingColor = null; catDeleteAction = 'delete'; catSubstitute = null; await renderCatMgr(); return; }
     if (act === 'cancel-del-cat') { catPendingDelete = null; await renderCatMgr(); return; }
     if (act === 'confirm-del-cat') {
       const name = btn.dataset.cat;
