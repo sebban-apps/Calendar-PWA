@@ -1,24 +1,16 @@
 {
-  "name": "Kalendarz nawyków",
-  "short_name": "Nawyki",
-  "start_url": "./kalendarz-nawykow.html",
+  "name": "Dziennik nauki",
+  "short_name": "Dziennik",
+  "description": "Timer sesji nauki, dziennik notatek, kalendarz i plan dnia.",
+  "lang": "pl",
+  "start_url": "./dziennik-nauki.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#101A20",
-  "theme_color": "#101A20",
+  "background_color": "#F5F8F7",
+  "theme_color": "#087F75",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ],
-  "description": "Prosty kalendarz do zapisywania nawyków, z kategoriami i wpisami powtarzalnymi.",
-  "lang": "pl"
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
 }
