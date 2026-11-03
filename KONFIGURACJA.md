@@ -1,152 +1,132 @@
-# Dziennik nauki, dokumentacja techniczna
+# Kalendarz nawyków · dokumentacja techniczna
 
 ## Przegląd
 
-Aplikacja jest statyczną stroną (PWA bez service workera) w jednym pliku `dziennik-nauki.html`. HTML, CSS i JavaScript są w tym samym pliku, bez frameworków, bundlera i zależności npm. Dane trzymane są lokalnie w przeglądarce.
+Statyczna aplikacja PWA w jednym pliku HTML (HTML, CSS i JavaScript bez frameworków i bez kroku budowania). Dane trzymane są lokalnie w przeglądarce. Hosting przez GitHub Pages, publikacja przez GitHub Actions.
 
-Interfejs korzysta z systemu wizualnego **Modern Teal Signature** (paleta teal, Manrope i Inter, jasny i ciemny motyw).
+Wygląd zgodny z systemem **Modern Teal Signature** (tokeny kolorów, Manrope i Inter, promienie 10/12/16/20 px, jasny i ciemny motyw).
+
+## Technologie i zależności
+
+| Element | Szczegóły |
+|---|---|
+| Kod | czysty HTML, CSS, JavaScript (ES2017+, `async/await`) |
+| Czcionki | Google Fonts, Manrope (500, 600, 700) i Inter (400, 500, 600) |
+| Magazyn danych | `localStorage`, w Claude `window.storage`, awaryjnie pamięć RAM |
+| Opcjonalne API | File System Access API (`showSaveFilePicker`), Web Share API |
+| Hosting | GitHub Pages |
+
+Brak zależności npm, brak kluczy API, brak zmiennych środowiskowych.
 
 ## Struktura plików
 
-| Plik | Rola |
-|---|---|
-| `index.html` | Przekierowanie do `dziennik-nauki.html` (adres główny strony) |
-| `dziennik-nauki.html` | Cała aplikacja |
-| `manifest.json` | Manifest PWA (nazwa, ikony, kolory, `start_url`) |
-| `icon-192.png`, `icon-512.png` | Ikony aplikacji |
-| `README.md` | Instrukcja dla użytkownika |
-| `KONFIGURACJA.md` | Ten plik |
-
-## Wymagania
-
-* Dowolny serwer plików statycznych lub GitHub Pages
-* Nowoczesna przeglądarka (Chrome, Edge, Firefox, Safari z ostatnich lat)
-* Brak zmiennych środowiskowych, kluczy API i bazy danych
+```
+.
+├── .github/
+│   └── workflows/
+│       └── deploy.yml        # publikacja na GitHub Pages
+├── index.html                # przekierowanie na kalendarz-nawykow.html
+├── kalendarz-nawykow.html    # cała aplikacja
+├── manifest.json             # manifest PWA
+├── icon-192.png              # ikona aplikacji 192×192
+├── icon-512.png              # ikona aplikacji 512×512
+├── README.md                 # instrukcja dla użytkownika
+└── KONFIGURACJA.md           # ten plik
+```
 
 ## Uruchomienie lokalne
 
-Plik można otworzyć bezpośrednio (`file://`), ale manifest i instalacja działają tylko przez HTTP.
+Wymagany dowolny serwer statyczny (manifest i część API nie działają poprawnie z `file://`).
 
 ```bash
-cd sciezka/do/projektu
 python3 -m http.server 8000
-# otwórz http://localhost:8000/
 ```
 
-## Publikacja na GitHub Pages
+Następnie otwórz `http://localhost:8000/kalendarz-nawykow.html`.
 
-1. Wrzuć wszystkie pliki do katalogu głównego repozytorium.
-2. W repozytorium wejdź w **Settings → Pages**, wybierz gałąź `main` i folder `/ (root)`.
-3. Strona będzie dostępna pod `https://<użytkownik>.github.io/<repozytorium>/`.
+## Architektura kodu
 
-Ścieżki w `manifest.json` są względne (`./`), więc aplikacja działa także w podkatalogu.
+Skrypt w `kalendarz-nawykow.html` jest jednym IIFE z trybem `strict`. Najważniejsze części
 
-## Usługi zewnętrzne
+- **`Store`** wybiera magazyn. Kolejność to `window.storage` (środowisko Claude), potem `localStorage`, na końcu `Map` w pamięci.
+- **`loadJSON` i `saveJSON`** serializują dane. Każdy zapis uruchamia `scheduleLiveMirror()` (zapis do podpiętego pliku z opóźnieniem 800 ms).
+- **Serie powtarzalne.** `addEntry` tworzy osobną serię (`seriesId`) dla każdego wybranego dnia tygodnia. `regenerateSeries` przy starcie dopisuje wystąpienia do horyzontu `RECURRING_HORIZON_WEEKS` (12 tygodni). `endSeriesFrom` kończy serię od danej daty, historia zostaje.
+- **Render.** `renderAll` wywołuje `renderVisRow`, `renderCalendar` i `renderResultsOrDay`. Widok wyszukiwania zastępuje karty dnia i dodawania.
+- **Motyw.** Krótki skrypt w `<head>` ustawia `data-theme` na `<html>` przed narysowaniem strony. Przycisk `#themeToggle` przełącza motyw i zapisuje wybór.
+- **`showToast(msg, kind)`** pokazuje krótkie potwierdzenie akcji (dodanie, edycja, usunięcie, zmiany kategorii).
 
-Jedyną zależnością sieciową są czcionki **Google Fonts** (Inter i Manrope), ładowane w `<head>`. Gdy są niedostępne, przeglądarka używa czcionki systemowej i aplikacja działa dalej.
+### Klucze w magazynie
 
-## Przechowywanie danych
-
-Warstwa `Store` w skrypcie wybiera magazyn w tej kolejności
-
-1. `window.storage`, jeśli istnieje (środowisko artefaktów Claude)
-2. `localStorage` przeglądarki, z prefiksem kluczy `dziennik-nauki:`
-3. pamięć operacyjna (`Map`), gdy `localStorage` jest zablokowany. Dane znikają po zamknięciu, a aplikacja pokazuje ostrzeżenie
-
-Klucze i format
+Wszystkie klucze w `localStorage` mają prefiks `kalendarz-nawykow:`.
 
 | Klucz | Zawartość |
 |---|---|
-| `sessions` | tablica `{ id, date (ISO), subject, minutes, note, favorite }` |
+| `entries` | tablica wpisów `{id, date, time, category, subtitle, note, favorite, seriesId}` |
 | `categories` | tablica nazw kategorii |
-| `presets` | tablica skrótów timera w minutach (1 do 180) |
-| `dayplans` | obiekt `{ "RRRR-MM-DD": [ { id, time, text, done } ] }` |
-| `theme` | `light` lub `dark`, zapisywany bezpośrednio w `localStorage` (poza `Store`), czytany przed pierwszym malowaniem strony |
+| `hiddenCategories` | kategorie ukryte w widoku |
+| `seriesMeta` | `{[seriesId]: {category, weekday, time, generatedUntil, endedAt}}` |
+| `categoryColors` | własne kolory kategorii `{nazwa: "#RRGGBB"}` |
+| `lastAutoBackup` | data ostatniej kopii `RRRR-MM-DD` |
+| `theme` | `light` albo `dark` (zapisywany zawsze bezpośrednio w `localStorage`) |
 
-Każdy odczyt przechodzi przez funkcje strażnicze (`asArray`, `asPlainObject`, filtry w `load*`), które odrzucają uszkodzone dane.
+Format pliku kopii ma pole `app: "kalendarz-nawykow"` i `version: 1`. Import przechodzi przez `sanitizeBackupPayload`, które odrzuca niepoprawne rekordy.
 
-### Plik kopii zapasowej
-
-```json
-{
-  "app": "dziennik-nauki",
-  "version": 1,
-  "exportedAt": "2026-11-03T12:00:00.000Z",
-  "sessions": [],
-  "categories": ["SQL", "Python", "Angielski", "Inne"],
-  "presets": [20, 30, 45],
-  "dayplans": {}
-}
-```
-
-Import przechodzi przez `sanitizeBackupPayload` i zastępuje wszystkie cztery klucze danych. Przy zmianie formatu podnieś `BACKUP_VERSION` i obsłuż starsze wersje w tej funkcji.
-
-## Najważniejsze parametry w kodzie
+## Ważne parametry
 
 | Stała | Wartość | Znaczenie |
 |---|---|---|
-| `DEFAULT_CATEGORIES` | SQL, Python, Angielski, Inne | Kategorie startowe |
-| `DEFAULT_PRESETS` | 45, 20, 30 | Skróty startowe |
-| `parseMinutes(..., 180)` | 180 | Limit timera |
-| `parseMinutes(..., 1440)` | 1440 | Limit wpisu ręcznego i edycji |
-| `BACKUP_VERSION` | 1 | Wersja formatu kopii |
+| `RECURRING_HORIZON_WEEKS` | `12` | na ile tygodni do przodu generowane są serie |
+| `AUTO_BACKUP_INTERVAL_DAYS` | `7` | co ile dni automatyczna kopia |
+| `BACKUP_VERSION` | `1` | wersja formatu kopii |
+| `DEFAULT_CATEGORIES` | 4 nazwy | kategorie startowe |
+| `CATEGORY_COLOR_PALETTE` | 12 kolorów | paleta kolorów kategorii |
 
-Etykiety „Techniczna · 45” i „Angielski · 20” są przypisane w `renderPresets()`.
+### Tokeny wyglądu
 
-## Timer
+Kolory, promienie i odstępy są zdefiniowane jako zmienne CSS w `:root` (motyw jasny) i `:root[data-theme="dark"]` (motyw ciemny). Najważniejsze to `--bg`, `--surface`, `--surface-2`, `--text`, `--text-2`, `--border`, `--accent`, `--accent-mist`, `--success`, `--error`, `--r-sm`, `--r-btn`, `--r-card`. Nowe elementy powinny używać tych tokenów zamiast wpisanych na sztywno kolorów. Wyjątkiem są kolory kategorii, bo to dane użytkownika.
 
-Odliczanie opiera się na znaczniku końca (`T.endAt`), a nie na liczeniu taktów `setInterval`. Dzięki temu czas jest poprawny także wtedy, gdy przeglądarka spowalnia kartę w tle. Interwał co 250 ms odświeża widok tylko przy zmianie sekundy, a zdarzenie `visibilitychange` wymusza przeliczenie po powrocie do karty. Po naturalnym zakończeniu wywoływane jest `navigator.vibrate` (jeśli dostępne).
+Kolor paska systemowego ustawia `<meta name="theme-color">` (aktualizowany przy zmianie motywu) oraz `theme_color` w `manifest.json`.
 
-## System wizualny
+## Publikacja na GitHub Pages
 
-Wszystkie kolory, promienie, odstępy, czcionki i czasy animacji są tokenami CSS w `:root`.
+Wymagane jednorazowo
 
-* Motyw ciemny jest zdefiniowany dla `:root[data-theme="dark"]` oraz dla `prefers-color-scheme: dark`, gdy użytkownik nie wybrał jasnego.
-* Kolory marki `--teal-deep`, `--teal`, `--teal-soft`, `--teal-mist`. Semantyczne `--success`, `--warning`, `--error`, `--info`.
-* Komponenty używają tokenów pochodnych (`--accent`, `--accent-tint`, `--accent-text`, `--surface`, `--elevated`), więc zmiana motywu nie wymaga osobnych reguł dla komponentów.
-* Promienie `--r-sm` 10px, `--r-btn` 12px, `--r-card` 16px, `--r-lg` 20px. Odstępy `--s1` do `--s7` (4 do 48 px).
-* `prefers-reduced-motion` wyłącza animacje.
+1. Plik workflow musi leżeć w `.github/workflows/deploy.yml`.
+2. W repozytorium **Settings → Pages → Build and deployment → Source** ustaw **GitHub Actions**.
 
-Okna potwierdzenia i wpisywania nazwy kategorii to własny komponent `Dialog` (zamiast `confirm()` i `prompt()`), a krótkie komunikaty obsługuje funkcja `toast()`.
+Publikacja uruchamia się przy każdym `push` na gałąź `main` albo ręcznie z zakładki **Actions** (`workflow_dispatch`). Workflow kopiuje do `_site` pliki `index.html`, `kalendarz-nawykow.html`, `manifest.json`, `icon-192.png` i `icon-512.png`.
 
-## Testy
+**Dodając nowy plik potrzebny aplikacji, dopisz go do polecenia `cp` w `deploy.yml`**, inaczej nie trafi na stronę. Pliki `.md` nie są publikowane.
 
-Automatycznych testów w repozytorium nie ma. Elementy mają atrybuty `data-testid`, a po starcie ustawiana jest flaga `window.__appReady = true`, co ułatwia testy np. w Playwright.
+## Testowanie
+
+Brak automatycznych testów w repozytorium. Elementy interfejsu mają atrybuty `data-testid` (np. `add-save`, `cal-grid`, `theme-toggle`), co ułatwia testy w Playwright albo podobnym narzędziu.
 
 Ręczna lista kontrolna po zmianach
 
-* start, pauza, wznowienie i zakończenie timera, zapis notatki
-* dodanie kategorii przez okno dialogowe
-* ręczny wpis z błędnymi i poprawnymi danymi
-* edycja, ulubione, wyszukiwanie, filtr i usunięcie wpisu
-* wpis z kalendarza i przełączanie miesięcy
-* plan dnia, walidacja godziny, odhaczanie punktów
-* eksport i import kopii
-* przełączenie motywu i odświeżenie strony
-* widok na szerokości 360 px i na komputerze
+- dodanie wpisu zwykłego i powtarzalnego, błędna godzina (np. `25:00`) pokazuje komunikat,
+- edycja, gwiazdka, usuwanie jednego dnia i całej serii,
+- wyszukiwanie i filtr ulubionych,
+- dodanie, zmiana nazwy, koloru i usunięcie kategorii,
+- eksport i import kopii,
+- przełączenie motywu i ponowne wczytanie strony,
+- widok na szerokości telefonu (ok. 390 px) i komputera (ponad 960 px),
+- brak błędów w konsoli przeglądarki.
 
 ## Rozwiązywanie problemów
 
-| Problem | Przyczyna i rozwiązanie |
-|---|---|
-| Brak opcji instalacji | Strona otwarta z `file://` albo bez HTTPS. Uruchom przez serwer lub GitHub Pages |
-| Po aktualizacji widać starą wersję | Pamięć podręczna przeglądarki. Odśwież z wyczyszczeniem cache lub zamknij i otwórz aplikację |
-| Dane zniknęły | Wyczyszczone dane witryny, inny adres (np. inna domena lub `localhost` zamiast Pages) albo tryb prywatny. Przywróć z kopii |
-| Inne czcionki niż w projekcie | Google Fonts zablokowane. Aplikacja działa na czcionkach systemowych |
-| Import zgłasza błąd | Plik nie jest JSON albo nie pochodzi z tej aplikacji |
+**Strona po publikacji się nie zmienia.** Sprawdź status workflow w zakładce Actions. Zainstalowana aplikacja może trzymać starą wersję w pamięci podręcznej, pomaga odświeżenie albo ponowne otwarcie.
 
-Dane są przypisane do adresu (origin). Zmiana domeny lub nazwy repozytorium oznacza nowy, pusty magazyn, więc przed przenosinami trzeba zrobić eksport.
+**Nowa ikona nie pojawia się na telefonie.** System zapamiętuje ikonę przy instalacji. Usuń aplikację z ekranu głównego i dodaj ją ponownie (dane w przeglądarce zostają, ale warto najpierw zrobić eksport kopii).
+
+**Dane zniknęły.** Najczęściej przez wyczyszczenie danych witryny albo tryb prywatny. Przywróć dane z ostatniego pliku kopii.
+
+**Brak opcji „połącz z plikiem na dysku”.** Przeglądarka nie obsługuje File System Access API (np. Firefox, Safari, telefony). Opcja jest wtedy ukryta.
+
+**Czcionki wyglądają inaczej.** Google Fonts się nie wczytało (brak internetu albo blokada). Aplikacja korzysta wtedy z czcionki systemowej.
 
 ## Wersjonowanie i aktualizacje
 
-* Wersja formatu danych to `BACKUP_VERSION` w skrypcie.
-* Aktualizacja polega na podmianie plików na serwerze. Ponieważ nie ma service workera, użytkownik dostaje nową wersję przy kolejnym załadowaniu strony.
-* Zmiany w strukturze danych powinny być wstecznie zgodne lub obsłużone migracją w funkcjach `load*`.
-
-## Możliwe rozszerzenia
-
-Nie są zaimplementowane.
-
-* service worker z pamięcią podręczną dla pracy offline
-* ikony typu `maskable` dla Androida
-* powiadomienia systemowe o końcu sesji
+- Zmiany wprowadzaj w `kalendarz-nawykow.html` i wypychaj na `main`, publikacja odbywa się automatycznie.
+- Zmiana struktury danych wymaga podniesienia `BACKUP_VERSION` i obsługi starszych plików w `sanitizeBackupPayload`.
+- Po każdej zmianie funkcji zaktualizuj `README.md` i ten plik.

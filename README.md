@@ -1,75 +1,86 @@
-# Dziennik nauki
+# Kalendarz nawyków
 
-Prosta aplikacja do mierzenia czasu nauki i zapisywania krótkich notatek po każdej sesji. Działa w przeglądarce na telefonie i komputerze, a na telefonie można ją zainstalować jak zwykłą aplikację.
+Prosta aplikacja do zapisywania codziennych nawyków w formie kalendarza. Każdy wpis ma kategorię (np. plastry, witaminy, kosmetyki, sport), opcjonalną godzinę, podtytuł i notatkę. Wpisy mogą się powtarzać co tydzień w wybrane dni.
+
+Aplikacja działa w przeglądarce na telefonie i komputerze i można ją zainstalować jak zwykłą aplikację.
 
 ## Co potrafi
 
-* **Timer** z tarczą i wskazówką, gotowymi skrótami (45, 20, 30 min) i własnym czasem od 1 do 180 minut
-* **Notatka po sesji** z wyborem kategorii (SQL, Python, Angielski, Inne oraz własne)
-* **Dziennik** z wyszukiwaniem, filtrem kategorii, ulubionymi, edycją i usuwaniem wpisów
-* **Statystyki** z ostatnich 7 dni i łącznie, z podziałem na kategorie
-* **Kalendarz** miesiąca, w którym widać dni z nauką i liczbę minut
-* **Plan dnia** z listą punktów, godzinami i paskiem postępu
-* **Kopia zapasowa** do pliku JSON i przywracanie z takiego pliku
-* **Jasny i ciemny motyw**
+- **Kalendarz miesięczny.** Dni z wpisami są wyróżnione i mają kolorowe kropki kategorii. Dzisiejszy dzień ma turkusową ramkę, wybrany dzień jest wypełniony kolorem.
+- **Wpisy na wybrany dzień.** Kategoria, godzina, podtytuł i szczegóły. Każdy wpis można oznaczyć gwiazdką, edytować albo usunąć.
+- **Wpisy powtarzalne.** Zaznacz „powtarzaj co tydzień” i wybierz dni tygodnia. Aplikacja tworzy wpisy na najbliższe 12 tygodni i dopisuje kolejne przy każdym otwarciu.
+- **Wyszukiwanie.** Pole „szukaj w notatkach” przeszukuje podtytuły, notatki i nazwy kategorii.
+- **Filtr ulubionych.** Przycisk z gwiazdką pokazuje tylko wpisy oznaczone gwiazdką.
+- **Ukrywanie kategorii.** Kliknięcie kategorii nad kalendarzem chowa ją z widoku (przekreślona i przygaszona). „wszystkie” i „żadna” przełączają wszystkie naraz.
+- **Zarządzanie kategoriami.** Dodawanie, zmiana nazwy, wybór koloru (12 gotowych albo własny) i usuwanie z wyborem, co zrobić z wpisami.
+- **Jasny i ciemny motyw.** Domyślnie taki jak w systemie. Przycisk w prawym górnym rogu przełącza motyw, a wybór zostaje zapamiętany.
+- **Kopia zapasowa.** Eksport i przywracanie danych z pliku JSON oraz automatyczna kopia co 7 dni.
 
 ## Jak korzystać
 
-### Timer
+### Dodawanie wpisu
 
-1. Wybierz skrót albo wpisz własny czas w polu „własny czas”.
-2. Naciśnij **Zacznij**. Podczas odliczania możesz dać **Pauza** i **Wznów**.
-3. Gdy czas minie, telefon krótko zawibruje (jeśli to obsługuje) i pojawi się ekran notatki. Sesję można też skończyć wcześniej przyciskiem **Zakończ i zapisz**, wtedy zapisze się faktycznie przepracowany czas.
-4. Wybierz kategorię, dopisz kilka słów i naciśnij **Zapisz**. **Pomiń** wraca do timera bez zapisu.
+1. Kliknij dzień w kalendarzu (domyślnie wybrany jest dzisiejszy).
+2. W karcie „Dodaj wpis” wybierz kategorię. „+ nowa” tworzy nową kategorię.
+3. Opcjonalnie wpisz podtytuł, godzinę (np. `8:00` albo `8.00`) i szczegóły.
+4. Kliknij „Dodaj wpis”. Na dole ekranu pojawi się krótkie potwierdzenie.
 
-Przycisk **zapisz jako skrót** dodaje wpisany czas do listy skrótów. Pozostały czas widać też w tytule karty przeglądarki.
+### Wpis powtarzalny
 
-### Dziennik
+1. Zaznacz „powtarzaj co tydzień”.
+2. Wybierz dni tygodnia (Pn do Nd). „cały tydzień” zaznacza wszystkie, „wyczyść” odznacza.
+3. Kliknij „Dodaj wpis”.
 
-* Pole wyszukiwania przeszukuje notatki i nazwy kategorii.
-* Gwiazdka obok pola pokazuje tylko ulubione wpisy.
-* Przy każdym wpisie są trzy ikony, czyli ulubione, edycja i usuwanie. Usunięcie trzeba potwierdzić.
-* **+ zapisz minioną sesję** dodaje wpis z dowolną datą, godziną i długością (do 1440 minut). To samo otwiera link pod timerem.
+Wpisy z serii mają ikonę dwóch strzałek obok kategorii.
 
-### Kalendarz
+### Edycja i usuwanie
 
-Strzałki zmieniają miesiąc. Dzień z wpisami ma kropki i sumę minut, a dzisiejszy dzień jest obwiedziony. Po kliknięciu dnia widać jego wpisy i formularz dodania nowego wpisu na ten dzień. Ponowne kliknięcie zamyka podgląd.
+- Ikona ołówka otwiera edycję. Można zmienić kategorię, godzinę, podtytuł, szczegóły i powtarzanie. Zmiana dni powtarzania obowiązuje od edytowanego dnia w przód, wcześniejsze wpisy serii zostają bez zmian.
+- Ikona kosza pyta o potwierdzenie. Przy wpisie z serii można usunąć tylko ten dzień albo całą serię od tej daty.
 
-### Plan dnia
+### Poruszanie się po kalendarzu
 
-Wpisz godzinę (np. `9:00`, można pominąć) i treść punktu, potem naciśnij **+** albo Enter. Kwadrat po lewej oznacza punkt jako zrobiony. Strzałki przełączają dni.
+- Strzałki obok nazwy miesiąca przełączają miesiące.
+- „dziś” wraca do dzisiejszego dnia.
+- „skocz do dnia” pozwala wybrać dowolną datę.
 
-### Kategorie
+## Dostęp i instalacja
 
-Przycisk **+ nowa** przy wyborze kategorii otwiera okno, w którym wpisujesz nazwę. Nowa kategoria od razu pojawia się w filtrach i formularzach.
+Aplikację otwiera się w przeglądarce pod adresem strony z GitHub Pages (np. `https://sebban03.github.io/NAZWA-REPOZYTORIUM/`).
 
-### Motyw
+**Telefon z Androidem (Chrome).** Menu z trzema kropkami, potem „Dodaj do ekranu głównego” albo „Zainstaluj aplikację”.
 
-Ikona księżyca lub słońca w prawym górnym rogu przełącza motyw. Wybór jest zapamiętywany. Dopóki nic nie wybierzesz, aplikacja dopasowuje się do ustawień systemu.
+**iPhone (Safari).** Przycisk udostępniania, potem „Do ekranu początkowego”.
 
-## Instalacja na telefonie
+**Komputer (Chrome, Edge).** Ikona instalacji na końcu paska adresu.
 
-Otwórz adres aplikacji w przeglądarce.
-
-* **Android (Chrome)** menu ⋮ i **Dodaj do ekranu głównego** lub **Zainstaluj aplikację**
-* **iPhone (Safari)** przycisk udostępniania i **Do ekranu początkowego**
-
-Na komputerze wystarczy otworzyć stronę w przeglądarce.
+Na telefonie widok jest jednokolumnowy. Na szerszym ekranie kalendarz jest po lewej, a wpisy i formularz po prawej.
 
 ## Gdzie są zapisane dane
 
-Wszystkie wpisy, kategorie, skróty i plany dnia są zapisywane **tylko w tej przeglądarce na tym urządzeniu**. Nic nie jest wysyłane na serwer i nie ma konta.
+Wszystkie dane są zapisywane **tylko w tej przeglądarce na tym urządzeniu**. Nic nie trafia na serwer i nie ma kont użytkowników.
 
-Oznacza to, że
+To oznacza, że
 
-* dane z telefonu nie pojawią się same na komputerze,
-* wyczyszczenie danych przeglądarki lub odinstalowanie aplikacji usuwa wpisy,
-* tryb prywatny może nie zapamiętywać danych. Aplikacja ostrzega wtedy komunikatem.
+- dane z telefonu nie pojawią się same na komputerze (można je przenieść plikiem kopii),
+- wyczyszczenie danych przeglądarki albo odinstalowanie aplikacji usuwa wpisy,
+- tryb prywatny nie zachowuje danych po zamknięciu karty.
 
-Dlatego warto co jakiś czas użyć **eksportuj kopię zapasową** w zakładce Dziennik. Na telefonie plik można od razu wysłać, np. na Dysk Google. **przywróć z kopii** wczytuje taki plik i **zastępuje** obecne dane, więc aplikacja pyta przed tym o potwierdzenie. W ten sposób przeniesiesz też dane na inne urządzenie.
+### Kopia zapasowa
+
+- **„eksportuj kopię zapasową”** zapisuje plik `nawyki-kopia-RRRR-MM-DD.json`. Na telefonie może otworzyć się okno udostępniania.
+- **„przywróć z kopii”** wczytuje taki plik. Uwaga, to zastępuje wszystkie obecne dane.
+- **Automatyczna kopia.** Jeśli od ostatniej kopii minęło 7 dni, aplikacja przy otwarciu sama pobierze plik kopii. Informacja o ostatniej kopii jest pod przyciskami.
+- **„połącz z plikiem na dysku”** (tylko Chrome i Edge na komputerze). Każda zmiana jest od razu zapisywana do wybranego pliku, dopóki karta jest otwarta.
+
+Motyw (jasny lub ciemny) nie jest częścią kopii zapasowej.
+
+## Internet i tryb offline
+
+Do otwarcia strony potrzebne jest połączenie z internetem. Samo korzystanie i zapisywanie danych odbywa się lokalnie. Bez internetu czcionki mogą wyglądać nieco inaczej, ale aplikacja działa normalnie, jeśli była już otwarta.
 
 ## Ograniczenia
 
-* Aplikacja potrzebuje internetu przy pierwszym otwarciu i do pobrania czcionek. Nie ma trybu offline z pamięcią podręczną, bez sieci strona może się nie otworzyć.
-* Timer nie wysyła powiadomień systemowych. Jeśli telefon zablokuje ekran, odliczanie liczy się poprawnie i po powrocie zobaczysz ekran notatki, ale sygnał zakończenia może nie dotrzeć.
-* Statystyka „ostatnie 7 dni” liczy siedem dób wstecz od teraz, a nie tydzień kalendarzowy.
+- Brak synchronizacji między urządzeniami.
+- Brak przypomnień i powiadomień.
+- Wpisy powtarzalne są generowane z wyprzedzeniem 12 tygodni, kolejne pojawiają się po otwarciu aplikacji.
