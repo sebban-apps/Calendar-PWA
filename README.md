@@ -12,7 +12,8 @@ Aplikacja działa w przeglądarce na telefonie i komputerze i można ją zainsta
 - **Kalendarz.** Miesiąc z kolorowymi kropkami kategorii. Pod nazwą miesiąca jest liczba wpisów, przycisk „Dziś” i ikona kalendarza do skoku na dowolny dzień. Na dole są kategorie, które można ukrywać i pokazywać.
 - **Wybrany dzień.** Lista wpisów z tego dnia i ich liczba.
 - **Dodaj wpis.** Formularz dla wybranego dnia.
-- **Ustawienia** (przycisk z suwakami w nagłówku). Zarządzanie kategoriami i kopia zapasowa.
+- **Ustawienia** (przycisk z suwakami w nagłówku). Zarządzanie kategoriami, kopia zapasowa i instalacja aplikacji.
+- **Propozycja instalacji.** Na telefonie baner „Zainstaluj aplikację” pod wyszukiwaniem, na komputerze przycisk „Zainstaluj” w nagłówku. Pokazują się tylko wtedy, gdy instalacja jest możliwa.
 
 Na telefonie wszystko jest w jednej kolumnie. Na komputerze kalendarz jest po lewej i zostaje na miejscu przy przewijaniu, a wpisy i formularz są po prawej.
 
@@ -58,15 +59,31 @@ Wpisz tekst w polu w nagłówku. Na telefonie wyniki zastępują kalendarz, żeb
 
 ### Ustawienia
 
-Przycisk z suwakami w nagłówku albo „zarządzaj” pod kalendarzem otwiera okno ustawień. Zamyka się krzyżykiem, klawiszem Escape albo kliknięciem obok okna.
+Przycisk z suwakami w nagłówku albo „zarządzaj” pod kalendarzem otwiera okno ustawień z sekcjami Kategorie, Kopia zapasowa i Aplikacja. Zamyka się krzyżykiem, klawiszem Escape albo kliknięciem obok okna.
 
 ## Instalacja
+
+Zainstalowany kalendarz otwiera się z ekranu głównego (albo menu Start) w osobnym oknie, bez paska przeglądarki. Dane są te same co w przeglądarce.
+
+### Z poziomu aplikacji
+
+- **Android i komputer (Chrome, Edge).** Kliknij „Zainstaluj” na banerze (telefon) albo w nagłówku (komputer) i potwierdź w okienku przeglądarki.
+- **iPhone i iPad.** Baner ma przycisk „Jak?”, który pokazuje instrukcję dla Safari.
+- **Zawsze** w Ustawieniach → Aplikacja jest przycisk instalacji albo instrukcja dla Twojej przeglądarki.
+
+Baner można zamknąć krzyżykiem, wtedy nie pokaże się ponownie na tym urządzeniu. Instalacja zostaje dostępna w ustawieniach. Gdy aplikacja jest uruchomiona jako zainstalowana, baner i przycisk się nie pokazują.
+
+Chrome proponuje instalację dopiero po chwili korzystania ze strony i nie proponuje jej, jeśli aplikacja jest już zainstalowana. Wtedy w ustawieniach jest instrukcja ręczna.
+
+### Ręcznie
 
 Otwórz https://sebban-apps.github.io/Calendar-PWA/ i
 
 - **Android (Chrome)** wybierz menu z trzema kropkami, potem „Dodaj do ekranu głównego” albo „Zainstaluj aplikację”,
 - **iPhone (Safari)** wybierz przycisk udostępniania, potem „Do ekranu początkowego”,
 - **komputer (Chrome, Edge)** kliknij ikonę instalacji na końcu paska adresu.
+
+Firefox na komputerze nie obsługuje instalacji.
 
 Kalendarz instaluje się jako osobna aplikacja, niezależnie od Dziennika nauki i Dziennika treningowego z tego samego adresu sebban-apps.github.io.
 
@@ -89,7 +106,7 @@ To oznacza, że
 - **Automatyczna kopia.** Jeśli od ostatniej kopii minęło 7 dni, aplikacja przy otwarciu sama pobierze plik kopii i pokaże o tym krótki komunikat.
 - **„połącz z plikiem na dysku”** (tylko Chrome i Edge na komputerze). Każda zmiana jest od razu zapisywana do wybranego pliku, dopóki karta jest otwarta.
 
-Pliki kopii z wcześniejszych wersji aplikacji wczytują się bez zmian, a nowe pliki działają też w starszej wersji. Motyw (jasny lub ciemny) nie jest częścią kopii.
+Pliki kopii z wcześniejszych wersji aplikacji wczytują się bez zmian, a nowe pliki działają też w starszej wersji. Motyw (jasny lub ciemny) i ukrycie banera instalacji nie są częścią kopii.
 
 ## Internet i tryb offline
 

@@ -20,7 +20,7 @@ Wygląd zgodny z systemem **Modern Teal Signature** (tokeny kolorów, Manrope i 
 | Czcionki | Google Fonts, Manrope (500, 600, 700) i Inter (400, 500, 600) |
 | Magazyn danych | `localStorage`, w Claude `window.storage`, awaryjnie pamięć RAM |
 | Okno ustawień | element `<dialog>` z `showModal()` (Chrome, Edge, Firefox, Safari 15.4+) |
-| Opcjonalne API | File System Access API (`showSaveFilePicker`), Web Share API, `HTMLInputElement.showPicker()` |
+| Opcjonalne API | File System Access API (`showSaveFilePicker`), Web Share API, `HTMLInputElement.showPicker()`, zdarzenia `beforeinstallprompt` i `appinstalled` |
 
 Brak zależności npm, brak kluczy API, brak zmiennych środowiskowych, brak service workera.
 
@@ -76,11 +76,14 @@ Kilka aplikacji (Calendar-PWA, Journal-PWA, training-log) działa pod tym samym 
 
 **Czystość repozytorium.** Jeśli Pages publikuje z gałęzi zamiast z Actions, każdy plik z repo trafia na stronę. Obca strona w katalogu `/Calendar-PWA/` (np. kopia `dziennik-nauki.html`) podpięłaby manifest kalendarza. Dlatego w repo mają być tylko pliki z listy powyżej.
 
+**Warunki instalacji w Chrome.** HTTPS, manifest z `name` lub `short_name`, ikony 192 i 512 px, `start_url`, `display: standalone` i chwila interakcji ze stroną. Service worker nie jest wymagany. Lokalnie Chrome zgłosił jedynie błąd `in-incognito`, wynikający z trybu testowego, więc sam manifest spełnia warunki. Bez spełnienia warunków przeglądarka nie wyśle `beforeinstallprompt` i aplikacja pokaże tylko instrukcję ręczną.
+
 **Weryfikacja po publikacji.**
 
 1. Otwórz `https://sebban-apps.github.io/Calendar-PWA/manifest.json` i sprawdź, czy zawiera pole `id`.
 2. W Chrome otwórz aplikację, DevTools → Application → Manifest. Pole „Computed App ID” ma być `https://sebban-apps.github.io/Calendar-PWA/kalendarz-nawykow.html`, a lista błędów pusta.
-3. Zainstaluj Kalendarz, potem Dziennik nauki (`/Journal-PWA/`). Obie instalacje mają się udać i otwierać właściwą aplikację.
+3. W tej samej zakładce sekcja „Installability” nie może zawierać błędów.
+4. Zainstaluj Kalendarz przyciskiem „Zainstaluj” w aplikacji, potem Dziennik nauki (`/Journal-PWA/`). Obie instalacje mają się udać i otwierać właściwą aplikację.
 
 ## Architektura kodu
 
@@ -94,6 +97,7 @@ Skrypt w `kalendarz-nawykow.html` jest jednym IIFE z trybem `strict`. Najważnie
 - **Okno ustawień.** `openSettings(sekcja)` resetuje stan menedżera kategorii, renderuje go i otwiera `<dialog id="settingsDlg">`. Toast jest na czas otwarcia przenoszony do okna, bo okno modalne leży w warstwie nad resztą strony.
 - **Import.** `importFile` → walidacja (`JSON.parse`, odrzucenie pola `app` innego niż `kalendarz-nawykow`, `sanitizeBackupPayload`) → podgląd w `#importConfirm` → `applyPendingImport` zapisuje dane.
 - **Motyw.** Krótki skrypt w `<head>` ustawia `data-theme` na `<html>` przed narysowaniem strony. Przycisk `#themeToggle` przełącza motyw i zapisuje wybór.
+- **Instalacja.** Skrypt w `<head>` przechwytuje `beforeinstallprompt` (`preventDefault`, zapis w `window.__installPrompt`) i wysyła zdarzenie `install-available`, bo Chrome może zgłosić gotowość przed załadowaniem głównego skryptu. `installMode()` zwraca `installed` (display-mode `standalone` albo `navigator.standalone`), `prompt` (jest zapisane zdarzenie), `ios` albo `manual`. `refreshInstallUI()` przełącza baner `#installBanner` (poniżej 960 px), przycisk `#installTopBtn` (od 960 px) i sekcję `#installPanel` w ustawieniach. `doInstall()` wywołuje `prompt()`. Zdarzenia można użyć tylko raz, dlatego jest od razu zerowane.
 - **Pomocnicze.** `showToast(msg, kind)` pokazuje potwierdzenie akcji, `plWpis(n)` daje poprawną odmianę („wpis”, „wpisy”, „wpisów”).
 
 ### Klucze w magazynie
@@ -109,6 +113,9 @@ Wszystkie klucze w `localStorage` mają prefiks `kalendarz-nawykow:`, więc nie 
 | `categoryColors` | własne kolory kategorii `{nazwa: "#RRGGBB"}` |
 | `lastAutoBackup` | data ostatniej kopii `RRRR-MM-DD` |
 | `theme` | `light` albo `dark` (zawsze bezpośrednio w `localStorage`) |
+| `installBannerHidden` | `1` po zamknięciu banera instalacji (bezpośrednio w `localStorage`) |
+
+`theme` i `installBannerHidden` to ustawienia urządzenia, nie są częścią pliku kopii.
 
 ### Format pliku kopii
 
@@ -166,6 +173,7 @@ Ręczna lista kontrolna po zmianach
 - wyszukiwanie, filtr ulubionych, przejście do dnia z wyników,
 - okno ustawień, zmiana nazwy, koloru i usunięcie kategorii, zamykanie Escape i kliknięciem w tło,
 - eksport kopii i import (podgląd, „Zastąp dane”, odrzucenie pliku innej aplikacji),
+- instalacja z banera (telefon) i z nagłówka (komputer), zamknięcie banera, sekcja Aplikacja w ustawieniach w Chrome, Safari na iPhonie i w aplikacji uruchomionej jako zainstalowana,
 - import pliku kopii zrobionego starszą wersją,
 - przełączenie motywu i ponowne wczytanie strony,
 - widok na szerokości telefonu (360 i 390 px) i komputera (ponad 960 px),
@@ -184,6 +192,10 @@ Ręczna lista kontrolna po zmianach
 **Dane zniknęły.** Najczęściej przez wyczyszczenie danych witryny albo tryb prywatny. Przywróć dane z ostatniego pliku kopii.
 
 **Brak opcji „połącz z plikiem na dysku”.** Przeglądarka nie obsługuje File System Access API (np. Firefox, Safari, telefony). Opcja jest wtedy ukryta.
+
+**Nie ma przycisku „Zainstaluj”.** Chrome jeszcze nie zgłosił gotowości (potrzebna chwila interakcji), aplikacja jest już zainstalowana albo przeglądarka nie obsługuje instalacji. Sprawdź DevTools → Application → Manifest → Installability. Instrukcja ręczna jest zawsze w ustawieniach.
+
+**Baner instalacji zniknął na stałe.** Został zamknięty krzyżykiem. Instalacja jest w Ustawieniach → Aplikacja. Żeby baner wrócił, usuń klucz `kalendarz-nawykow:installBannerHidden` z `localStorage`.
 
 **Ikona kalendarza nie otwiera wyboru daty.** Starsze przeglądarki nie mają `showPicker()`. Aplikacja próbuje wtedy kliknąć ukryte pole daty. Zawsze działa też przechodzenie strzałkami i „Dziś”.
 

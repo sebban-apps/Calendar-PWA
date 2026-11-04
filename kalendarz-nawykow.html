@@ -23,6 +23,13 @@
   var m = document.getElementById('themeColorMeta');
   if (m) m.setAttribute('content', t === 'dark' ? '#101A20' : '#F5F8F7');
 })();
+/* instalacja: Chrome/Edge mogą zgłosić gotowość zanim załaduje się główny skrypt */
+window.__installPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  window.__installPrompt = e;
+  document.dispatchEvent(new Event('install-available'));
+});
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -106,7 +113,7 @@
   .date-line{font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
   .title{font-family:var(--font-head);font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:2px}
   @media (max-width:599px){
-    .title{font-size:clamp(20px,5.6vw,26px)}
+    .title{font-size:clamp(19px,5.4vw,26px)}
     .brand{gap:10px}
     .ripple-mark{width:32px;height:32px}
     .top-actions{gap:6px}
@@ -330,6 +337,27 @@
   .set-meta{font-size:13px;color:var(--text-2);margin-top:4px}
   #importConfirm:empty{display:none}
   #importConfirm .confirm-q{font-size:14px;line-height:1.55}
+
+  /* ---------- instalacja ---------- */
+  .install-top{display:none}
+  @media (min-width:960px){
+    .install-top.show{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:8px 14px;font-size:14px;border-radius:var(--r-sm)}
+    .install-top svg{width:16px;height:16px}
+  }
+  .install-banner{display:none;align-items:center;gap:12px;padding:12px 8px 12px 16px;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);box-shadow:inset 3px 0 0 var(--accent),var(--shadow-1)}
+  .install-banner.show{display:flex;animation:fade-up .3s var(--ease)}
+  @media (min-width:960px){.install-banner.show{display:none}}
+  @media (max-width:399px){.install-banner img{display:none}.install-banner button.primary{padding:8px 12px}}
+  .install-banner img{width:36px;height:36px;border-radius:var(--r-sm);flex-shrink:0}
+  .ib-text{flex:1;min-width:0}
+  .ib-title{font-family:var(--font-head);font-size:15px;font-weight:700;line-height:1.3}
+  .ib-sub{font-size:13px;color:var(--text-2);line-height:1.4;margin-top:2px}
+  .install-banner button.primary{min-height:40px;padding:8px 14px;font-size:14px;flex-shrink:0}
+  .install-steps{margin:0 0 12px;padding-left:20px;font-size:14px;line-height:1.7}
+  .install-steps li::marker{color:var(--accent);font-weight:600}
+  .install-steps svg{width:16px;height:16px;vertical-align:-3px;color:var(--accent)}
+  .install-ok{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--success)}
+  .install-ok svg{width:18px;height:18px;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -359,6 +387,7 @@
     </div>
 
     <div class="top-actions">
+      <button type="button" class="ghost install-top" id="installTopBtn" data-testid="install-top" title="zainstaluj jako aplikację"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7.5v7M9 11.5l3 3 3-3"/></svg>Zainstaluj</button>
       <button type="button" class="icon-btn" id="settingsBtn" data-testid="settings-btn" title="ustawienia" aria-label="ustawienia: kategorie i kopia zapasowa">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
       </button>
@@ -368,6 +397,18 @@
       </button>
     </div>
   </header>
+
+  <div class="install-banner" id="installBanner" data-testid="install-banner" role="region" aria-label="instalacja aplikacji">
+    <img src="icon-192.png" alt="">
+    <div class="ib-text">
+      <div class="ib-title">Zainstaluj aplikację</div>
+      <div class="ib-sub" id="installBannerSub">Kalendarz na ekranie głównym.</div>
+    </div>
+    <button type="button" class="primary" id="installBannerBtn" data-testid="install-banner-btn">Zainstaluj</button>
+    <button type="button" class="mini-btn" id="installBannerClose" data-testid="install-banner-close" aria-label="ukryj propozycję instalacji">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
 
   <div class="layout">
   <div class="col-a">
@@ -454,6 +495,11 @@
       <div class="err" id="backupMsg" data-testid="backup-msg" role="status"></div>
       <div class="set-meta" id="autoBackupInfo" data-testid="auto-backup-info"></div>
       <div id="liveMirrorRow" data-testid="live-mirror-row" style="display:none;margin-top:8px"></div>
+    </section>
+
+    <section class="set-section" id="setApp">
+      <h3 class="card-title">Aplikacja</h3>
+      <div id="installPanel" data-testid="install-panel"></div>
     </section>
   </div>
 </dialog>
@@ -1284,6 +1330,7 @@ async function openSettings(sectionId) {
   showErr($('backupMsg'), ''); pendingImport = null; renderImportConfirm();
   await renderCatMgr();
   await renderAutoBackupInfo();
+  renderInstallPanel();
   if (!settingsDlg.open) {
     if (typeof settingsDlg.showModal === 'function') settingsDlg.showModal(); else settingsDlg.setAttribute('open', '');
   }
@@ -1722,6 +1769,94 @@ async function applyPendingImport() {
   }
 }
 
+/* ================= INSTALACJA ================= */
+const INSTALL_HIDE_KEY = 'kalendarz-nawykow:installBannerHidden';
+const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Udostępnij"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M8 11H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2"/></svg>';
+function isStandalone() {
+  return (window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches || window.matchMedia('(display-mode: window-controls-overlay)').matches)) || window.navigator.standalone === true;
+}
+function isIOS() {
+  const ua = navigator.userAgent || '';
+  return /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function installMode() {
+  if (isStandalone()) return 'installed';
+  if (window.__installPrompt) return 'prompt';
+  if (isIOS()) return 'ios';
+  return 'manual';
+}
+function bannerHidden() { try { return localStorage.getItem(INSTALL_HIDE_KEY) === '1'; } catch (e) { return false; } }
+
+function renderInstallPanel() {
+  const box = $('installPanel');
+  if (!box) return;
+  const mode = installMode();
+  if (mode === 'installed') {
+    box.innerHTML = `<div class="install-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Aplikacja jest zainstalowana i działa w osobnym oknie.</div>`;
+  } else if (mode === 'prompt') {
+    box.innerHTML = `<div class="hint-text">Kalendarz można zainstalować na tym urządzeniu. Będzie się otwierał z ekranu głównego albo menu Start, w osobnym oknie bez paska przeglądarki. Dane zostają te same.</div>
+      <button class="primary" id="installPanelBtn" data-testid="install-panel-btn">Zainstaluj aplikację</button>`;
+    $('installPanelBtn').addEventListener('click', doInstall);
+  } else if (mode === 'ios') {
+    box.innerHTML = `<div class="hint-text">Na iPhonie i iPadzie instaluje się przez menu udostępniania w Safari.</div>
+      <ol class="install-steps">
+        <li>Stuknij ${SHARE_ICON} <b>Udostępnij</b> na pasku Safari.</li>
+        <li>Wybierz <b>Do ekranu początkowego</b>.</li>
+        <li>Potwierdź przyciskiem <b>Dodaj</b>.</li>
+      </ol>`;
+  } else {
+    box.innerHTML = `<div class="hint-text">Ta przeglądarka nie zaproponowała instalacji. Możesz zrobić to ręcznie.</div>
+      <ol class="install-steps">
+        <li><b>Chrome lub Edge na komputerze</b> to ikona instalacji na końcu paska adresu albo menu ⋮ → <b>Zainstaluj</b>.</li>
+        <li><b>Chrome na Androidzie</b> to menu ⋮ → <b>Dodaj do ekranu głównego</b> albo <b>Zainstaluj aplikację</b>.</li>
+        <li><b>Safari na iPhonie</b> to ${SHARE_ICON} Udostępnij → <b>Do ekranu początkowego</b>.</li>
+      </ol>
+      <div class="set-meta">Jeśli takiej opcji nie ma, aplikacja może być już zainstalowana na tym urządzeniu. Firefox na komputerze nie obsługuje instalacji.</div>`;
+  }
+}
+
+function refreshInstallUI() {
+  const mode = installMode();
+  const banner = $('installBanner');
+  banner.classList.toggle('show', (mode === 'prompt' || mode === 'ios') && !bannerHidden());
+  $('installBannerSub').textContent = mode === 'ios'
+    ? 'Przez menu Udostępnij w Safari.'
+    : 'Kalendarz na ekranie głównym.';
+  $('installBannerBtn').textContent = mode === 'ios' ? 'Jak?' : 'Zainstaluj';
+  $('installTopBtn').classList.toggle('show', mode === 'prompt');
+  renderInstallPanel();
+}
+
+async function doInstall() {
+  const ev = window.__installPrompt;
+  if (!ev) { await openSettings('setApp'); return; }
+  window.__installPrompt = null;               // zdarzenia można użyć tylko raz
+  try {
+    ev.prompt();
+    const choice = await ev.userChoice;
+    if (choice && choice.outcome === 'dismissed') showToast('Instalację można dokończyć później w ustawieniach');
+  } catch (e) { showToast('Nie udało się otworzyć instalacji', 'error'); }
+  refreshInstallUI();
+}
+
+$('installBannerBtn').addEventListener('click', () => { if (installMode() === 'prompt') doInstall(); else openSettings('setApp'); });
+$('installTopBtn').addEventListener('click', doInstall);
+$('installBannerClose').addEventListener('click', () => {
+  try { localStorage.setItem(INSTALL_HIDE_KEY, '1'); } catch (e) { /* tylko na tę sesję */ }
+  $('installBanner').classList.remove('show');
+  showToast('Instalacja jest też w ustawieniach');
+});
+document.addEventListener('install-available', refreshInstallUI);
+window.addEventListener('appinstalled', () => {
+  window.__installPrompt = null;
+  refreshInstallUI();
+  showToast('Zainstalowano aplikację');
+});
+if (window.matchMedia) {
+  const dm = window.matchMedia('(display-mode: standalone)');
+  if (dm.addEventListener) dm.addEventListener('change', refreshInstallUI);
+}
+
 /* ---------------- render zbiorczy ---------------- */
 async function renderAll() {
   await renderVisRow();
@@ -1736,6 +1871,7 @@ async function renderAll() {
   await regenerateSeries();
   await renderAll();
   await renderLiveMirrorRow();
+  refreshInstallUI();
   await maybeAutoBackup();
   await renderAutoBackupInfo();
   window.__appReady = true;
