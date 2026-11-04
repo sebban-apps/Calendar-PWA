@@ -1,12 +1,15 @@
 {
+  "id": "/Calendar-PWA/kalendarz-nawykow.html",
   "name": "Kalendarz nawyków",
   "short_name": "Nawyki",
+  "description": "Prosty kalendarz do zapisywania nawyków, z kategoriami i wpisami powtarzalnymi.",
+  "lang": "pl",
   "start_url": "./kalendarz-nawykow.html",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#101A20",
   "theme_color": "#101A20",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
@@ -18,7 +21,5 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "description": "Prosty kalendarz do zapisywania nawyków, z kategoriami i wpisami powtarzalnymi.",
-  "lang": "pl"
+  ]
 }

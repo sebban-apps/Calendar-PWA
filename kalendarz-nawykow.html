@@ -82,13 +82,22 @@
 
   /* ---------- układ: jedna kolumna na telefonie, dwie na komputerze ---------- */
   @media (min-width:960px){
-    .page{max-width:1080px;padding-left:32px;padding-right:32px;padding-top:40px}
-    .layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);grid-template-areas:"a b" "c b";column-gap:24px;align-items:start}
-    .col-a{grid-area:a} .col-b{grid-area:b} .col-c{grid-area:c}
+    .page{max-width:1120px;padding-left:32px;padding-right:32px;padding-top:40px}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:24px;align-items:start}
+    .col-a{position:sticky;top:24px}
   }
+  /* na telefonie wyniki szukania zastępują kalendarz, żeby były od razu pod polem wyszukiwania */
+  @media (max-width:959px){body.searching .col-a{display:none}}
+  .group-label{margin:16px 0 0}
 
   /* ---------- nagłówek ---------- */
-  header.top{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  header.top{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand actions" "tools tools";gap:16px 12px;align-items:center;margin-bottom:16px}
+  header.top .brand{grid-area:brand}
+  header.top .toolbar{grid-area:tools;margin:0}
+  .top-actions{grid-area:actions;display:flex;gap:8px}
+  @media (min-width:960px){
+    header.top{grid-template-columns:minmax(0,1fr) minmax(260px,400px) auto;grid-template-areas:"brand tools actions";gap:24px;margin-bottom:24px}
+  }
   .brand{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
   .ripple-mark{flex-shrink:0;display:block}
   .ripple-mark .r-outer{transform-origin:20px 20px;animation:ripple-in .9s var(--ease) both}
@@ -96,6 +105,13 @@
   @keyframes ripple-in{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
   .date-line{font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
   .title{font-family:var(--font-head);font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:2px}
+  @media (max-width:599px){
+    .title{font-size:clamp(20px,5.6vw,26px)}
+    .brand{gap:10px}
+    .ripple-mark{width:32px;height:32px}
+    .top-actions{gap:6px}
+    .top-actions .icon-btn{width:38px;height:38px}
+  }
   @media (min-width:600px){.title{font-size:32px}}
 
   /* ---------- karty ---------- */
@@ -151,17 +167,26 @@
   .vis-chip.off{opacity:var(--hidden-op);text-decoration:line-through;text-decoration-color:var(--text-3)}
   .vis-quick,.wd-quick,.link-btn{font-family:var(--font-ui);font-size:13px;font-weight:500;color:var(--accent);background:none;border:none;cursor:pointer;padding:6px 4px;border-radius:6px;text-decoration:none;transition:color var(--dur) var(--ease)}
   .vis-quick:hover,.wd-quick:hover,.link-btn:hover{color:var(--accent-hover);text-decoration:underline;text-underline-offset:3px}
-  .vis-actions{margin-bottom:16px;font-size:13px}
+  .vis-actions{font-size:13px;display:flex;align-items:center;flex-wrap:wrap}
+  .legend{margin-top:16px;padding-top:16px;border-top:1px solid var(--border-soft)}
+  .legend-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .legend-head .field-label{margin:0}
 
   .stats-line{font-size:13px;color:var(--text-2);text-align:center;margin:0 0 16px;min-height:20px;font-variant-numeric:tabular-nums}
+  .stats-line:empty::before{content:'brak wpisów w tym miesiącu';color:var(--text-3)}
   .stats-line b{color:var(--accent);font-weight:600}
 
   /* ---------- kalendarz ---------- */
   .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .cal-month{font-family:var(--font-head);font-size:18px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-  .cal-jump-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;color:var(--text-2)}
-  .cal-jump-label{display:flex;align-items:center;gap:8px}
-  .cal-jump-row input[type=date]{width:auto;margin:0;padding:6px 10px;font-size:14px}
+  .cal-sub{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px;padding:0 4px}
+  .cal-sub .stats-line{margin:0;text-align:left}
+  .cal-sub-actions{display:flex;align-items:center;gap:8px}
+  .today-btn{font-family:var(--font-ui);font-size:13px;font-weight:600;min-height:36px;padding:6px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface);color:var(--accent);cursor:pointer;transition:background-color var(--dur) var(--ease),border-color var(--dur) var(--ease)}
+  .today-btn:hover{background:var(--accent-mist);border-color:var(--accent)}
+  .jump-wrap{position:relative;display:inline-flex}
+  .jump-wrap .icon-btn{width:36px;height:36px}
+  .jump-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;padding:0;border:0;pointer-events:none}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
   .cal-dow{font-size:11px;font-weight:600;letter-spacing:.06em;text-align:center;color:var(--text-3);padding-bottom:6px;text-transform:uppercase}
   .cal-cell{min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:7px;border-radius:var(--r-sm);cursor:pointer;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;border:1px solid transparent;color:var(--text);background:transparent;transition:background-color var(--dur) var(--ease),border-color var(--dur) var(--ease),color var(--dur) var(--ease),box-shadow var(--dur) var(--ease)}
@@ -178,9 +203,6 @@
   .cal-cell.selected .cal-more{color:var(--on-accent)}
 
   /* ---------- rozwijane panele ---------- */
-  .disclosure{margin-top:0}
-  .panel{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)}
-  .panel.visible{display:block;animation:fade-up .22s var(--ease)}
   @keyframes fade-up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
   .row-2{display:flex;gap:12px}
   .row-2>div{flex:1}
@@ -259,7 +281,8 @@
 
   /* ---------- kopia zapasowa ---------- */
   .backup-actions{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
-  .backup-card .err{margin:6px 0 4px}
+  #backupMsg{margin:8px 0 0;min-height:0}
+  #backupMsg:empty{display:none}
   .live-mirror{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .live-mirror svg{width:14px;height:14px;color:var(--accent);flex-shrink:0}
   .live-mirror .hint-text{margin:0}
@@ -271,6 +294,42 @@
   .toast.show{opacity:1;transform:translate(-50%,0)}
   .toast-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0}
   .toast.error .toast-dot{background:var(--error)}
+
+  /* ---------- nagłówek listy wpisów ---------- */
+  .log-heading .log-count{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--text-2);background:var(--surface-2);border-radius:999px;padding:2px 8px;font-variant-numeric:tabular-nums;order:2}
+  .log-heading::after{order:1}
+  .log-heading .link-btn{order:3;font-family:var(--font-ui)}
+  .date-link{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-mist);border:none;border-radius:6px;padding:2px 8px;cursor:pointer;font-variant-numeric:tabular-nums;transition:filter var(--dur) var(--ease)}
+  .date-link:hover{filter:brightness(.96);text-decoration:underline;text-underline-offset:2px}
+
+  /* ---------- nowa kategoria w formularzu ---------- */
+  .new-cat-inline{display:inline-flex;align-items:center;gap:6px;flex:1 1 220px;min-width:0}
+  .new-cat-inline input[type=text]{margin:0;min-height:38px;padding:7px 10px}
+  .new-cat-inline .chip{flex-shrink:0}
+
+  /* ---------- okno ustawień ---------- */
+  dialog.sheet{border:1px solid var(--border);border-radius:var(--r-lg);background:var(--surface);color:var(--text);padding:0;width:min(560px,calc(100vw - 32px));max-width:none;max-height:min(86vh,780px);box-shadow:var(--shadow-2);overflow:hidden}
+  dialog.sheet[open]{display:flex;flex-direction:column;animation:sheet-in .24s var(--ease)}
+  dialog.sheet::backdrop{background:rgba(16,26,32,.45)}
+  @keyframes sheet-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media (max-width:599px){
+    dialog.sheet{width:100%;margin:auto 0 0;max-height:90vh;border-radius:var(--r-lg) var(--r-lg) 0 0;border-bottom:none}
+  }
+  body:has(dialog[open]){overflow:hidden}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 16px 24px;border-bottom:1px solid var(--border-soft);flex-shrink:0}
+  .sheet-title{font-family:var(--font-head);font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0}
+  .sheet-body{overflow-y:auto;padding:0 24px calc(env(safe-area-inset-bottom) + 24px);overscroll-behavior:contain}
+  @media (max-width:599px){.sheet-head{padding-left:16px}.sheet-body{padding-left:16px;padding-right:16px}}
+  .set-section{padding:20px 0;border-bottom:1px solid var(--border-soft);scroll-margin-top:8px}
+  .set-section:last-child{border-bottom:none}
+  .set-section .card-title{margin-bottom:4px}
+  .set-section>.hint-text{margin:0 0 12px}
+  .backup-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .backup-btns button{display:inline-flex;align-items:center;gap:8px}
+  .backup-btns svg{width:16px;height:16px}
+  .set-meta{font-size:13px;color:var(--text-2);margin-top:4px}
+  #importConfirm:empty{display:none}
+  #importConfirm .confirm-q{font-size:14px;line-height:1.55}
 </style>
 </head>
 <body>
@@ -288,93 +347,116 @@
         <h1 class="title" style="margin:2px 0 0">Kalendarz nawyków</h1>
       </div>
     </div>
-    <button type="button" class="icon-btn theme-btn" id="themeToggle" data-testid="theme-toggle" title="zmień motyw" aria-label="przełącz jasny lub ciemny motyw">
-      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
-      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-    </button>
-  </header>
 
-  <div class="layout">
-  <div class="col-a">
-  <div class="card">
     <div class="toolbar">
       <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="text" id="searchInput" data-testid="search" placeholder="szukaj w notatkach…" aria-label="szukaj w notatkach">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="text" id="searchInput" data-testid="search" placeholder="szukaj we wpisach…" aria-label="szukaj we wpisach" enterkeyhint="search">
       </div>
-      <button class="icon-btn" id="favFilterBtn" data-testid="fav-filter" title="tylko ulubione" aria-label="pokaż tylko ulubione">
+      <button class="icon-btn" id="favFilterBtn" data-testid="fav-filter" title="tylko ulubione" aria-label="pokaż tylko ulubione" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
       </button>
     </div>
 
-    <div class="vis-row" id="visRow" data-testid="vis-row"></div>
-    <div class="vis-actions">
-      <button type="button" class="vis-quick" id="visAllBtn" data-testid="vis-all">wszystkie</button>
-      <span class="sep">·</span>
-      <button type="button" class="vis-quick" id="visNoneBtn" data-testid="vis-none">żadna</button>
+    <div class="top-actions">
+      <button type="button" class="icon-btn" id="settingsBtn" data-testid="settings-btn" title="ustawienia" aria-label="ustawienia: kategorie i kopia zapasowa">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      </button>
+      <button type="button" class="icon-btn theme-btn" id="themeToggle" data-testid="theme-toggle" title="zmień motyw" aria-label="przełącz jasny lub ciemny motyw">
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
     </div>
+  </header>
 
-    <div class="stats-line" id="statsLine" data-testid="stats-line"></div>
-
+  <div class="layout">
+  <div class="col-a">
+  <section class="card cal-card" aria-label="kalendarz">
     <div class="cal-nav">
       <button class="icon-btn plain" id="calPrev" data-testid="cal-prev" aria-label="poprzedni miesiąc">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
       </button>
       <div class="cal-month" id="calMonthLabel" data-testid="cal-month" aria-live="polite">—</div>
       <button class="icon-btn plain" id="calNext" data-testid="cal-next" aria-label="następny miesiąc">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
       </button>
     </div>
-    <div class="cal-jump-row">
-      <button type="button" class="vis-quick" id="calTodayBtn" data-testid="cal-today">dziś</button>
-      <span class="sep">·</span>
-      <label class="cal-jump-label">skocz do dnia
-        <input type="date" id="calJumpInput" data-testid="cal-jump-input">
-      </label>
+    <div class="cal-sub">
+      <div class="stats-line" id="statsLine" data-testid="stats-line"></div>
+      <div class="cal-sub-actions">
+        <button type="button" class="today-btn" id="calTodayBtn" data-testid="cal-today">Dziś</button>
+        <span class="jump-wrap">
+          <button type="button" class="icon-btn" id="calJumpBtn" data-testid="cal-jump-btn" title="skocz do dnia" aria-label="skocz do wybranego dnia">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
+          </button>
+          <input type="date" class="jump-input" id="calJumpInput" data-testid="cal-jump-input" tabindex="-1" aria-hidden="true">
+        </span>
+      </div>
     </div>
     <div class="cal-grid" id="calGrid" data-testid="cal-grid"></div>
-  </div>
+
+    <div class="legend">
+      <div class="legend-head">
+        <span class="field-label">Kategorie w kalendarzu</span>
+        <div class="vis-actions">
+          <button type="button" class="vis-quick" id="visAllBtn" data-testid="vis-all">wszystkie</button>
+          <span class="sep">·</span>
+          <button type="button" class="vis-quick" id="visNoneBtn" data-testid="vis-none">żadna</button>
+          <span class="sep">·</span>
+          <button type="button" class="vis-quick" id="manageCatsBtn" data-testid="manage-cats">zarządzaj</button>
+        </div>
+      </div>
+      <div class="vis-row" id="visRow" data-testid="vis-row"></div>
+    </div>
+  </section>
   </div>
 
   <div class="col-b">
-  <div class="card" id="resultsCard" data-testid="results-card" style="display:none">
+  <section class="card" id="resultsCard" data-testid="results-card" style="display:none" aria-label="wyniki wyszukiwania">
     <div id="resultsPanel" data-testid="results-panel"></div>
-  </div>
+  </section>
 
-  <div class="card" id="dayCard" data-testid="day-card">
+  <section class="card" id="dayCard" data-testid="day-card" aria-label="wpisy wybranego dnia">
     <div id="dayPanel" data-testid="day-panel"></div>
-  </div>
+  </section>
 
-  <div class="card add-card" id="addCard" data-testid="add-card">
+  <section class="card add-card" id="addCard" data-testid="add-card" aria-label="dodaj wpis">
     <div id="addPanel" data-testid="add-panel"></div>
-  </div>
-  </div>
-
-  <div class="col-c">
-  <div class="card">
-    <div class="disclosure">
-      <button class="link-btn" id="toggleCatMgrBtn" data-testid="toggle-cat-mgr">+ zarządzaj kategoriami</button>
-      <div class="panel" id="catMgrPanel" data-testid="cat-mgr-panel"></div>
-    </div>
-  </div>
-
-  <div class="card backup-card">
-    <div class="disclosure">
-      <div class="backup-actions">
-        <button class="link-btn" id="exportBtn" data-testid="export-btn">eksportuj kopię zapasową</button>
-        <span class="sep">·</span>
-        <button class="link-btn" id="importBtn" data-testid="import-btn">przywróć z kopii</button>
-      </div>
-      <input type="file" id="importFile" data-testid="import-file" accept="application/json,.json" style="display:none">
-      <div class="err" id="backupMsg" data-testid="backup-msg" role="status"></div>
-      <div class="hint-text" id="autoBackupInfo" data-testid="auto-backup-info"></div>
-      <div id="liveMirrorRow" data-testid="live-mirror-row" style="display:none;margin-top:6px"></div>
-    </div>
-  </div>
+  </section>
   </div>
   </div>
 
 </div>
+
+<dialog class="sheet" id="settingsDlg" data-testid="settings-dlg" aria-labelledby="settingsTitle">
+  <div class="sheet-head">
+    <h2 class="sheet-title" id="settingsTitle">Ustawienia</h2>
+    <button type="button" class="icon-btn plain" id="settingsClose" data-testid="settings-close" aria-label="zamknij ustawienia">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="sheet-body">
+    <section class="set-section" id="setCats">
+      <h3 class="card-title">Kategorie</h3>
+      <div class="hint-text">Nazwa, kolor i usuwanie. Zmiany obejmują wszystkie wpisy danej kategorii.</div>
+      <div id="catMgrPanel" data-testid="cat-mgr-panel"></div>
+    </section>
+
+    <section class="set-section" id="setBackup">
+      <h3 class="card-title">Kopia zapasowa</h3>
+      <div class="hint-text">Plik kopii zawiera wpisy, kategorie, kolory i serie powtarzalne. Można go wczytać na innym urządzeniu.</div>
+      <div class="backup-btns">
+        <button class="ghost" id="exportBtn" data-testid="export-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Eksportuj kopię</button>
+        <button class="ghost" id="importBtn" data-testid="import-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 21h14"/></svg>Przywróć z pliku</button>
+      </div>
+      <input type="file" id="importFile" data-testid="import-file" accept="application/json,.json" style="display:none">
+      <div id="importConfirm" data-testid="import-confirm"></div>
+      <div class="err" id="backupMsg" data-testid="backup-msg" role="status"></div>
+      <div class="set-meta" id="autoBackupInfo" data-testid="auto-backup-info"></div>
+      <div id="liveMirrorRow" data-testid="live-mirror-row" style="display:none;margin-top:8px"></div>
+    </section>
+  </div>
+</dialog>
 
 <div class="toast" id="toast" role="status" aria-live="polite"><span class="toast-dot"></span><span id="toastText"></span></div>
 
@@ -530,12 +612,22 @@ function parseClock(raw) {
   return { ok: true, value: `${h}:${pad(mi)}` };
 }
 function showErr(el, msg) { if (el) el.textContent = msg || ''; }
+/* 1 wpis, 2 wpisy, 5 wpisów, 22 wpisy */
+function plWpis(n) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (n === 1) return 'wpis';
+  if (b >= 2 && b <= 4 && !(a >= 12 && a <= 14)) return 'wpisy';
+  return 'wpisów';
+}
 
 /* krótkie potwierdzenie akcji na dole ekranu */
 let toastTimer = null;
 function showToast(msg, kind) {
   const t = $('toast');
   if (!t) return;
+  const dlg = $('settingsDlg');
+  const host = (dlg && dlg.open) ? dlg : document.body;
+  if (t.parentNode !== host) host.appendChild(t);
   $('toastText').textContent = msg;
   t.classList.toggle('error', kind === 'error');
   t.classList.add('show');
@@ -652,18 +744,34 @@ async function renderCatChips(container, selectedRef, allowAdd) {
     (allowAdd ? `<button type="button" class="chip add-new" data-addcat="1">+ nowa</button>` : '');
 }
 function wireCatChips(container, selectedRef, allowAdd, onChange) {
+  const commitNewCat = async () => {
+    const input = container.querySelector('.new-cat-input');
+    if (!input) return;
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    const cats = await loadCategories();
+    const existed = cats.includes(name);
+    if (!existed) { cats.push(name); await saveCategories(cats); }
+    selectedRef.value = name;
+    await renderCatChips(container, selectedRef, allowAdd);
+    await renderVisRow();
+    if (!existed) showToast('Dodano kategorię');
+    if (onChange) onChange();
+  };
+  container.addEventListener('keydown', async e => {
+    if (!e.target.classList.contains('new-cat-input')) return;
+    if (e.key === 'Enter') { e.preventDefault(); await commitNewCat(); }
+    if (e.key === 'Escape') { e.preventDefault(); await renderCatChips(container, selectedRef, allowAdd); }
+  });
   container.addEventListener('click', async e => {
     const add = e.target.closest('[data-addcat]');
     if (add) {
-      const name = (prompt('Nazwa nowej kategorii:') || '').trim();
-      if (!name) return;
-      const cats = await loadCategories();
-      if (!cats.includes(name)) { cats.push(name); await saveCategories(cats); }
-      selectedRef.value = name;
-      await renderCatChips(container, selectedRef, allowAdd);
-      if (onChange) onChange();
+      add.outerHTML = `<span class="new-cat-inline"><input type="text" class="new-cat-input" data-testid="add-new-cat-input" placeholder="nazwa kategorii" maxlength="40" enterkeyhint="done" aria-label="nazwa nowej kategorii"><button type="button" class="chip" data-addcat-ok="1" data-testid="add-new-cat-ok">Dodaj</button><button type="button" class="mini-btn" data-addcat-cancel="1" aria-label="anuluj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`;
+      container.querySelector('.new-cat-input').focus();
       return;
     }
+    if (e.target.closest('[data-addcat-ok]')) { await commitNewCat(); return; }
+    if (e.target.closest('[data-addcat-cancel]')) { await renderCatChips(container, selectedRef, allowAdd); return; }
     const chip = e.target.closest('[data-cat]');
     if (!chip) return;
     selectedRef.value = chip.dataset.cat;
@@ -711,15 +819,23 @@ $('searchInput').addEventListener('input', () => { F.search = $('searchInput').v
 $('favFilterBtn').addEventListener('click', () => {
   F.favOnly = !F.favOnly;
   $('favFilterBtn').classList.toggle('active', F.favOnly);
+  $('favFilterBtn').setAttribute('aria-pressed', String(F.favOnly));
   renderResultsOrDay();
 });
+function clearSearch() {
+  F.search = ''; F.favOnly = false;
+  $('searchInput').value = '';
+  $('favFilterBtn').classList.remove('active');
+  $('favFilterBtn').setAttribute('aria-pressed', 'false');
+}
+$('searchInput').addEventListener('keydown', e => { if (e.key === 'Escape' && $('searchInput').value) { clearSearch(); renderResultsOrDay(); } });
 
 function dayLabelOf(dateStr) {
   const d = dateFromYmd(dateStr), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);
   const same = (a, b) => a.toDateString() === b.toDateString();
   if (same(d, t)) return 'dziś';
   if (same(d, y)) return 'wczoraj';
-  return `${d.getDate()} ${MONTHS_ABBR[d.getMonth()]}`;
+  return `${d.getDate()} ${MONTHS_ABBR[d.getMonth()]}${d.getFullYear() !== t.getFullYear() ? ' ' + d.getFullYear() : ''}`;
 }
 
 function entryStaticHtml(s, showDate) {
@@ -727,7 +843,7 @@ function entryStaticHtml(s, showDate) {
     <div class="entry-top">
       <div style="flex:1">
         <div class="entry-meta">
-          ${showDate ? `<span>${dayLabelOf(s.date)}</span>` : ''}
+          ${showDate ? `<button type="button" class="date-link" data-act="goto" data-date="${s.date}" title="pokaż ten dzień w kalendarzu">${dayLabelOf(s.date)}</button>` : ''}
           ${s.time ? `<span>${esc(s.time)}</span>` : ''}
           <span class="entry-tag"><span class="cat-dot" style="background:${colorForCategory(s.category)}"></span>${esc(s.category)}</span>
           ${s.seriesId ? `<span class="series-mark" title="wpis z serii powtarzalnej" aria-label="wpis z serii powtarzalnej"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>` : ''}
@@ -843,6 +959,15 @@ async function handleEntryListClick(e, list, afterChange) {
   const id = Number(btn.dataset.id);
   const act = btn.dataset.act;
 
+  if (act === 'goto') {
+    clearSearch();
+    jumpToDate(btn.dataset.date);
+    if (window.matchMedia && !window.matchMedia('(min-width:960px)').matches) {
+      setTimeout(() => dayCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    }
+    return;
+  }
+
   if (act === 'fav') {
     const entries = await loadEntries();
     const s = entries.find(x => x.id === id);
@@ -943,6 +1068,7 @@ let addRecurDays = new Set();
 function searchActive() { return F.search !== '' || F.favOnly; }
 
 async function renderResultsOrDay() {
+  document.body.classList.toggle('searching', searchActive());
   if (searchActive()) {
     resultsCard.style.display = ''; dayCard.style.display = 'none'; addCard.style.display = 'none';
     dayPanel.innerHTML = ''; addPanel.innerHTML = '';
@@ -964,13 +1090,22 @@ async function renderResults() {
       if (!hay.includes(F.search)) return false;
     }
     return true;
-  }).sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+  });
+  /* najpierw dzisiejsze i wcześniejsze (od najnowszych), potem zaplanowane (od najbliższych) */
+  const todayKey = ymd(new Date());
+  const keyOf = s => s.date + (s.time || '99:99');
+  const past = filtered.filter(s => s.date <= todayKey).sort((a, b) => keyOf(b).localeCompare(keyOf(a)));
+  const upcoming = filtered.filter(s => s.date > todayKey).sort((a, b) => keyOf(a).localeCompare(keyOf(b)));
+  const rowHtml = s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, true)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`;
+  const groupHtml = (label, list) => list.length ? `${past.length && upcoming.length ? `<div class="field-label group-label">${label}</div>` : ''}${list.map(rowHtml).join('')}` : '';
 
-  let html = `<div class="log-heading">wyniki${filtered.length ? ` · ${filtered.length}` : ''}</div>`;
+  const what = F.favOnly && !F.search ? 'Ulubione' : 'Wyniki';
+  let html = `<div class="log-heading">${what}<span class="log-count">${filtered.length}</span><button type="button" class="link-btn" id="clearSearchBtn" data-testid="clear-search">wyczyść</button></div>`;
   html += filtered.length
-    ? filtered.map(s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, true)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`).join('')
-    : `<div class="empty-log">Nic nie pasuje do szukania.</div>`;
+    ? groupHtml('Do dziś', past) + groupHtml('Zaplanowane', upcoming)
+    : `<div class="empty-log">${F.favOnly && !F.search ? 'Nie masz jeszcze ulubionych wpisów.<br>Oznacz wpis gwiazdką, żeby tu trafił.' : 'Nic nie pasuje do szukania.'}</div>`;
   resultsPanel.innerHTML = html;
+  $('clearSearchBtn').addEventListener('click', () => { clearSearch(); renderResultsOrDay(); });
 }
 
 let catsCache = DEFAULT_CATEGORIES.slice();
@@ -984,10 +1119,10 @@ async function renderDayEntries() {
   const [y, m, d] = key.split('-').map(Number);
   const label = `${d} ${MONTHS_GEN[m - 1]} ${y}${key === ymd(new Date()) ? ' · dziś' : ''}`;
 
-  let html = `<div class="log-heading">${esc(label)}</div>`;
+  let html = `<div class="log-heading">${esc(label)}${entries.length ? `<span class="log-count">${entries.length}</span>` : ''}</div>`;
   html += entries.length
     ? entries.map(s => `<div class="entry${editingId === s.id ? ' editing' : ''}${deletingId === s.id ? ' confirming' : ''}" data-id="${s.id}">${entryStaticHtml(s, false)}${editingId === s.id ? entryEditHtml(s, catsCache) : ''}${deletingId === s.id ? entryConfirmHtml(s) : ''}</div>`).join('')
-    : `<div class="empty-log">Brak wpisów tego dnia.</div>`;
+    : `<div class="empty-log">Brak wpisów tego dnia.<br>Dodaj pierwszy w formularzu poniżej.</div>`;
   dayPanel.innerHTML = html;
 }
 
@@ -1069,6 +1204,13 @@ function jumpToDate(dateStr) {
   if (!searchActive()) renderResultsOrDay();
 }
 $('calTodayBtn').addEventListener('click', () => { jumpToDate(ymd(new Date())); });
+$('calJumpBtn').addEventListener('click', () => {
+  const inp = $('calJumpInput');
+  inp.value = CAL.selected || '';
+  try { if (typeof inp.showPicker === 'function') { inp.showPicker(); return; } } catch (e) { /* niżej zapasowo */ }
+  inp.style.pointerEvents = 'auto'; inp.focus(); inp.click();
+  setTimeout(() => { inp.style.pointerEvents = ''; }, 400);
+});
 $('calJumpInput').addEventListener('change', () => {
   const v = $('calJumpInput').value;
   if (v && DATE_RE.test(v)) jumpToDate(v);
@@ -1077,7 +1219,7 @@ $('calJumpInput').addEventListener('change', () => {
 async function renderStats(entries) {
   const [y, m] = [CAL.year, CAL.month];
   const inMonth = entries.filter(s => { const d = dateFromYmd(s.date); return d.getFullYear() === y && d.getMonth() === m && isVisible(s.category); });
-  $('statsLine').innerHTML = inMonth.length ? `w tym miesiącu: <b>${inMonth.length}</b> ${inMonth.length === 1 ? 'wpis' : 'wpisów'}` : '';
+  $('statsLine').innerHTML = inMonth.length ? `<b>${inMonth.length}</b> ${plWpis(inMonth.length)} w tym miesiącu` : '';
 }
 
 async function renderCalendar() {
@@ -1136,11 +1278,26 @@ let catSubstitute = null;
 let catPendingRename = null;
 let catPendingColor = null;
 
-$('toggleCatMgrBtn').addEventListener('click', async () => {
-  const panel = $('catMgrPanel');
-  if (panel.classList.contains('visible')) { panel.classList.remove('visible'); }
-  else { panel.classList.add('visible'); catPendingDelete = null; catPendingRename = null; catPendingColor = null; await renderCatMgr(); }
-});
+const settingsDlg = $('settingsDlg');
+async function openSettings(sectionId) {
+  catPendingDelete = null; catPendingRename = null; catPendingColor = null;
+  showErr($('backupMsg'), ''); pendingImport = null; renderImportConfirm();
+  await renderCatMgr();
+  await renderAutoBackupInfo();
+  if (!settingsDlg.open) {
+    if (typeof settingsDlg.showModal === 'function') settingsDlg.showModal(); else settingsDlg.setAttribute('open', '');
+  }
+  const sec = sectionId && $(sectionId);
+  if (sec) sec.scrollIntoView({ block: 'start' }); else settingsDlg.querySelector('.sheet-body').scrollTop = 0;
+}
+function closeSettings() {
+  if (typeof settingsDlg.close === 'function') settingsDlg.close(); else settingsDlg.removeAttribute('open');
+}
+$('settingsBtn').addEventListener('click', () => openSettings());
+$('manageCatsBtn').addEventListener('click', () => openSettings('setCats'));
+$('settingsClose').addEventListener('click', closeSettings);
+settingsDlg.addEventListener('click', e => { if (e.target === settingsDlg) closeSettings(); });
+settingsDlg.addEventListener('close', () => { const t = $('toast'); if (t && t.parentNode !== document.body) document.body.appendChild(t); });
 
 async function countEntriesFor(cat) {
   const entries = await loadEntries();
@@ -1186,7 +1343,7 @@ async function renderCatMgr() {
       const others = cats.filter(x => x !== c);
       if (!catSubstitute || !others.includes(catSubstitute)) catSubstitute = others[0] || null;
       html += `<div class="cat-manage-row expanded">
-        <div class="confirm-q">${n > 0 ? `Kategoria „${esc(c)}” ma ${n} ${n === 1 ? 'wpis' : 'wpisów'}. Co zrobić z nimi?` : `Usunąć pustą kategorię „${esc(c)}”?`}</div>
+        <div class="confirm-q">${n > 0 ? `Kategoria „${esc(c)}” ma ${n} ${plWpis(n)}. Co zrobić z nimi?` : `Usunąć pustą kategorię „${esc(c)}”?`}</div>
         ${n > 0 ? `
         <label class="radio-row">
           <input type="radio" name="catDelAction" value="delete" ${catDeleteAction === 'delete' ? 'checked' : ''}> usuń też te wpisy
@@ -1453,9 +1610,9 @@ $('exportBtn').addEventListener('click', async () => {
 async function renderAutoBackupInfo() {
   try {
     const last = await Store.get('lastAutoBackup');
-    if (!last) { autoBackupInfo.textContent = 'automatyczna kopia: jeszcze żadnej — zapisze się przy pierwszej okazji'; return; }
+    if (!last) { autoBackupInfo.textContent = 'Automatyczna kopia co 7 dni. Jeszcze żadnej, zapisze się przy pierwszej okazji.'; return; }
     const days = daysBetween(dateFromYmd(last), new Date());
-    autoBackupInfo.textContent = days <= 0 ? 'automatyczna kopia: dzisiaj' : `automatyczna kopia: ${days} ${days === 1 ? 'dzień' : 'dni'} temu`;
+    autoBackupInfo.textContent = days <= 0 ? 'Automatyczna kopia co 7 dni. Ostatnia dzisiaj.' : `Automatyczna kopia co 7 dni. Ostatnia ${days} ${days === 1 ? 'dzień' : 'dni'} temu.`;
   } catch (e) { /* nieistotne dla działania appki */ }
 }
 async function maybeAutoBackup() {
@@ -1469,7 +1626,7 @@ async function maybeAutoBackup() {
     const data = await gatherBackup();
     if (!data.entries.length && !last) return; // nie ma jeszcze czego zapisywać
     const ok = await writeBackupToDisk(data, { silent: true });
-    if (ok) await Store.set('lastAutoBackup', ymd(today));
+    if (ok) { await Store.set('lastAutoBackup', ymd(today)); showToast('Zapisano automatyczną kopię zapasową'); }
   } catch (e) { /* cichy backup nie może wywrócić appki */ }
 }
 
@@ -1499,16 +1656,53 @@ $('importBtn').addEventListener('click', () => {
   $('importFile').click();
 });
 
+let pendingImport = null;
+function fmtBackupDate(iso) {
+  const d = new Date(iso);
+  if (!iso || isNaN(d)) return null;
+  return `${d.getDate()} ${MONTHS_GEN[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function renderImportConfirm() {
+  const box = $('importConfirm');
+  if (!pendingImport) { box.innerHTML = ''; return; }
+  const { clean, fileName, exportedAt } = pendingImport;
+  const n = clean.entries.length, k = clean.categories.length;
+  const when = fmtBackupDate(exportedAt);
+  box.innerHTML = `<div class="confirm-box">
+    <div class="confirm-q">Plik „${esc(fileName)}”${when ? ` z ${esc(when)}` : ''} zawiera <b>${n} ${plWpis(n)}</b> i ${k} ${k === 1 ? 'kategorię' : (k % 10 >= 2 && k % 10 <= 4 && !(k % 100 >= 12 && k % 100 <= 14) ? 'kategorie' : 'kategorii')}.<br>Wczytanie zastąpi wszystkie obecne dane w aplikacji.</div>
+    <div class="confirm-actions">
+      <button class="danger" id="importApplyBtn" data-testid="import-apply">Zastąp dane</button>
+      <button class="ghost" id="importCancelBtn" data-testid="import-cancel">Anuluj</button>
+    </div></div>`;
+  $('importCancelBtn').addEventListener('click', () => { pendingImport = null; renderImportConfirm(); });
+  $('importApplyBtn').addEventListener('click', applyPendingImport);
+}
+
 $('importFile').addEventListener('change', async e => {
   const file = e.target.files && e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  if (!confirm('To zastąpi obecne dane danymi z pliku. Kontynuować?')) return;
+  pendingImport = null; renderImportConfirm();
   try {
     const text = await file.text();
     let parsed;
     try { parsed = JSON.parse(text); } catch (e2) { throw new Error('Plik nie jest poprawnym JSON.'); }
+    if (parsed && typeof parsed === 'object' && typeof parsed.app === 'string' && parsed.app !== 'kalendarz-nawykow') {
+      throw new Error(`To kopia innej aplikacji („${parsed.app}”), nie Kalendarza nawyków.`);
+    }
     const clean = sanitizeBackupPayload(parsed);
+    pendingImport = { clean, fileName: file.name, exportedAt: parsed.exportedAt };
+    renderImportConfirm();
+  } catch (err) {
+    backupMsg.style.color = 'var(--error)';
+    backupMsg.textContent = err.message || 'Nie udało się wczytać pliku.';
+  }
+});
+
+async function applyPendingImport() {
+  if (!pendingImport) return;
+  const clean = pendingImport.clean;
+  try {
     await saveEntries(clean.entries);
     await saveCategories(clean.categories);
     await saveSeriesMeta(clean.seriesMeta);
@@ -1516,14 +1710,17 @@ $('importFile').addEventListener('change', async e => {
     await saveCategoryColors(clean.categoryColors);
     categoryColorCache = clean.categoryColors;
     hiddenCats = clean.hiddenCategories.slice();
+    pendingImport = null; renderImportConfirm();
     backupMsg.style.color = 'var(--success)';
-    backupMsg.textContent = `Przywrócono ${clean.entries.length} ${clean.entries.length === 1 ? 'wpis' : 'wpisów'}.`;
+    backupMsg.textContent = `Przywrócono ${clean.entries.length} ${plWpis(clean.entries.length)}.`;
+    await renderCatMgr();
     await renderAll();
+    showToast('Przywrócono dane z kopii');
   } catch (err) {
     backupMsg.style.color = 'var(--error)';
     backupMsg.textContent = err.message || 'Nie udało się wczytać pliku.';
   }
-});
+}
 
 /* ---------------- render zbiorczy ---------------- */
 async function renderAll() {
